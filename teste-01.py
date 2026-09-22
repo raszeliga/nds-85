@@ -22,9 +22,9 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-st.set_page_config(layout="wide", page_title="Malha Hexagonal - Visualizador")
+st.set_page_config(layout="wide", page_title="Hexagonal Network - Viewer")
 
-st.title("Visualizador de Velocidades")
+st.title("Speed Viewer")
 
 # Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
 def hex_to_rgba(hex_str, alpha=255):
@@ -66,23 +66,44 @@ except Exception as e:
     st.stop()
     
 # 2. Sidebar - Controles
-st.sidebar.header("Variável de Análise")
+st.sidebar.header("Analysis Variable")
 colunas_numericas = list(gdf_hex.select_dtypes(include=[np.number]).columns)
 if not colunas_numericas:
-    st.error("Nenhuma coluna numérica encontrada no arquivo GPKG.")
+    st.error("No numeric column found in the GPKG file")
     st.stop()
 
-coluna_alvo = st.sidebar.selectbox("Variável contínua:", colunas_numericas)
+coluna_alvo = st.sidebar.selectbox("Continuous variable:", colunas_numericas)
 
 st.sidebar.markdown("---")
-st.sidebar.header("Corredores de Transporte")
+st.sidebar.header("Transportation Corridors")
 
 # Camadas lineares com cores temáticas fixas
-mostrar_biarticulado = st.sidebar.checkbox("🔴 Eixos Biarticulado", value=False)
-mostrar_linha_verde = st.sidebar.checkbox("🟢 Linha Verde", value=False)
-mostrar_contorno = st.sidebar.checkbox("🟤 Contorno Rodoviário", value=False)
-mostrar_277 = st.sidebar.checkbox("🟤 BR-277", value=False)
-mostrar_comend = st.sidebar.checkbox("🟤 Av das Torres (Comendador Franco)", value=False)
+
+# Funções/tags auxiliares para criar a linha indicadora da legenda
+mostrar_biarticulado = st.sidebar.checkbox(
+    ":red[━━━] Structuring Axes", 
+    value=False
+)
+
+mostrar_linha_verde = st.sidebar.checkbox(
+    ":green[━━━] Linha Verde", 
+    value=False
+)
+
+mostrar_contorno = st.sidebar.checkbox(
+    ":orange[━━━] Ringroad", 
+    value=False
+)
+
+mostrar_277 = st.sidebar.checkbox(
+    ":violet[━━━] Roadway BR-277", 
+    value=False
+)
+
+mostrar_comend = st.sidebar.checkbox(
+    ":gray[━━━] Av das Torres (Comendador Franco)", 
+    value=False
+)
 
 # 3. Tratamento de Cores dos Hexágonos (Transparência 0.65 -> alpha ~ 166 de 255)
 # colormap = cm.get_cmap("viridis")
@@ -198,7 +219,7 @@ if mostrar_contorno:
         id="layer-contorno",
         stroked=True,
         filled=False,
-        get_line_color=hex_to_rgba("#b26e00", 255),  # Contorno Rodoviário
+        get_line_color=hex_to_rgba("#f07436", 255),  # Contorno Rodoviário
         line_width_min_pixels=2.0,
         pickable=False
     )
@@ -211,7 +232,7 @@ if mostrar_277:
         id="layer-277",
         stroked=True,
         filled=False,
-        get_line_color=hex_to_rgba("#efde61", 255),  # BR-277
+        get_line_color=hex_to_rgba("#7F00FF", 255),  # BR-277
         line_width_min_pixels=2.0,
         pickable=False
     )
@@ -254,11 +275,49 @@ deck = pdk.Deck(
 col_mapa, col_graficos = st.columns([3, 2], gap="medium")
 
 with col_mapa:
-    st.subheader("Distribuição Espacial")
+    st.subheader("Spatial Distribution")
     st.pydeck_chart(deck, use_container_width=True)
 
+# --- BARRA DE LEGENDA DO MAPA ---
+    # Amostra cores ao longo da rampa (YlOrRd) para gerar o gradiente CSS
+    n_passos = 10
+    gradiente_amostras = [colormap(i / (n_passos - 1)) for i in range(n_passos)]
+    gradiente_css = ", ".join([f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})" for r, g, b, _ in gradiente_amostras])
+
+    # Interpolação para 5 marcos intermediários de valores
+    marcos = np.linspace(vmin, vmax, 5)
+
+    st.markdown(
+        f"""
+        <div style="margin-top: 10px; margin-bottom: 25px; padding: 10px 14px; background: rgba(245, 245, 245, 0.7); border-radius: 6px; border: 1px solid #e0e0e0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">
+                <span>Legenda: {coluna_alvo}</span>
+                <span style="font-weight: normal; color: #666; font-size: 12px;">Transparência: 65%</span>
+            </div>
+            <!-- Barra Gradiente -->
+            <div style="
+                height: 14px;
+                width: 100%;
+                border-radius: 3px;
+                background: linear-gradient(to right, {gradiente_css});
+                border: 1px solid #999;
+                box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+            "></div>
+            <!-- Rótulos dos Valores -->
+            <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px; color: #444; font-family: monospace;">
+                <span>{marcos[0]:.2f}</span>
+                <span>{marcos[1]:.2f}</span>
+                <span>{marcos[2]:.2f}</span>
+                <span>{marcos[3]:.2f}</span>
+                <span>{marcos[4]:.2f}</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 with col_graficos:
-    st.subheader(f"Distribuição: {coluna_alvo}")
+    st.subheader(f"Distribution: {coluna_alvo}")
     
     serie_limpa = dados_coluna.dropna()
     
