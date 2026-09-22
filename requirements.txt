@@ -1,0 +1,9 @@
+streamlit
+pandas
+geopandas
+pydeck
+matplotlib.pyplot
+matplotlib.colors
+numpy
+plotly.graph_objects
+plotly.subplots
