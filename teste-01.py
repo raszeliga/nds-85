@@ -1,277 +1,443 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jun  8 16:51:41 2026
+Created on Tue Sep 22 10:35:53 2026
 
 @author: rafaelszeliga
 """
-# verificar https://www.kaggle.com/code/illiyask/decision-tree-regressor
-# https://www.kaggle.com/code/aakaashjois/simple-random-forest-regression
 
-### Análise considerando as variáveis expicativas:
-# "V85_on" --> excluído
-# 'populacao_h3',
-# 'domicilios_h3',
-# 'stop_g1',
-# 'crosswalk_zebra',
-# 'roadbump_g2',
-# 'traffic_signals',
-# 'speed_cameras',
-# 'pontosLinha',
-# 'cruzamentos',
-# 'HMP',
-# 'VMP
+# para rodar no streamlit
+#### para rodar no terminal:
+#### streamlit run teste-01.py
 
-###################################################
-## Considerando uma Árvore de Decisão Regression ##
-###################################################
+# pip install pydeck
 
-### Ao final esse arquivo utiliza o kfold para analisar os daodos ###
-
-import numpy as np
+import streamlit as st
 import pandas as pd
 import geopandas as gpd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeRegressor
-import seaborn as sns
+import pydeck as pdk
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import numpy as np
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
+st.set_page_config(layout="wide", page_title="Hexagonal Network - Viewer")
 
-# arquivo oriundo do script 7b contem as células que tem registro nds (excluindo a v85_on)
-# arquivo grade_h9_DT_nds: /Users/rafaelszeliga/Library/CloudStorage/OneDrive-Pessoal/PósGrad/2023 PPGCG/Artigo_2025/Decision_Tree/grade_h9_DT_nds.gpkg
-# arquivo completo: /Users/rafaelszeliga/Library/CloudStorage/OneDrive-Pessoal/PósGrad/2023 PPGCG/Artigo_2025/Decision_Tree/grade_h9_DT.gpkg
-# PREPARAR ARQUIVO SÓ COM A REGIONAL MATRIZ PARA TESTAR
-# arquivo regional matriz: /Users/rafaelszeliga/Library/CloudStorage/OneDrive-Pessoal/PósGrad/2023 PPGCG/Artigo_2025/Decision_Tree/grade_h9_DT_regional_matriz.gpkg
-# arquivo regional matriz atualizado /Users/rafaelszeliga/Library/CloudStorage/OneDrive-Pessoal/PósGrad/2023 PPGCG/Artigo_2025/Decision_Tree/grade_h9_DT_regional_matriz_v3.gpkg
-# grade_h9_DT
-gdf = gpd.read_file(
-    '/Users/rafaelszeliga/Library/CloudStorage/OneDrive-Pessoal/PósGrad/2023 PPGCG/Artigo_2025/Decision_Tree/grade_h9_DT_nds_v3.gpkg'
+st.title("Speed Viewer")
+
+# Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
+def hex_to_rgba(hex_str, alpha=255):
+    hex_str = hex_str.lstrip("#")
+    return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
+
+# 1. Carregamento dos Dados
+@st.cache_data
+def carregar_camada(caminho_gpkg):
+    gdf = gpd.read_file(caminho_gpkg)
+    # PyDeck e Leaflet exigem coordenadas geográficas WGS84 (EPSG:4326)
+    if gdf.crs is None or gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs(epsg=4326)
+    return gdf
+
+# Caminhos dos arquivos
+caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/grade_h9_DT_nds_v3_dados_inferidos_DT_RF_simplificado.gpkg"
+caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
+
+# Caminhos dos corredores de transporte
+caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/rota_bi-articulados_dissolv.gpkg"
+caminho_linha_verde = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Linha_Verde_Dissolv_2.gpkg"
+caminho_contorno = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Contorno_dissolv.gpkg"
+caminho_br277 = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/BR-277.gpkg"
+caminho_comend = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/comend_franco.gpkg"
+
+try:
+    gdf_hex = carregar_camada(caminho_hex)
+    gdf_limite = carregar_camada(caminho_limite)
+    
+    # Carregamento dos eixos de transporte
+    gdf_biarticulado = carregar_camada(caminho_biarticulado)
+    gdf_linha_verde = carregar_camada(caminho_linha_verde)
+    gdf_contorno = carregar_camada(caminho_contorno)
+    gdf_277 = carregar_camada(caminho_br277)
+    gdf_comend = carregar_camada(caminho_comend)
+except Exception as e:
+    st.error(f"Erro ao carregar os arquivos GPKG: {e}")
+    st.stop()
+    
+# 2. Sidebar - Controles
+st.sidebar.header("Analysis Variable")
+colunas_numericas = list(gdf_hex.select_dtypes(include=[np.number]).columns)
+if not colunas_numericas:
+    st.error("No numeric column found in the GPKG file")
+    st.stop()
+
+coluna_alvo = st.sidebar.selectbox("Chose a continuous variable:", colunas_numericas)
+
+st.sidebar.markdown("---")
+st.sidebar.header("Transportation Corridors")
+
+# Camadas lineares com cores temáticas fixas
+
+# Funções/tags auxiliares para criar a linha indicadora da legenda
+mostrar_biarticulado = st.sidebar.checkbox(
+    ":red[━━━] Structuring Axes", 
+    value=False
+)
+
+mostrar_linha_verde = st.sidebar.checkbox(
+    ":green[━━━] Linha Verde", 
+    value=False
+)
+
+mostrar_contorno = st.sidebar.checkbox(
+    ":orange[━━━] Ringroad", 
+    value=False
+)
+
+mostrar_277 = st.sidebar.checkbox(
+    ":violet[━━━] Roadway BR-277", 
+    value=False
+)
+
+mostrar_comend = st.sidebar.checkbox(
+    ":gray[━━━] Av das Torres (Comendador Franco)", 
+    value=False
+)
+
+# 3. Tratamento de Cores dos Hexágonos (Transparência 0.65 -> alpha ~ 166 de 255)
+# colormap = cm.get_cmap("viridis")
+alpha_hex = int(255 * 0.65)
+dados_coluna = gdf_hex[coluna_alvo]
+
+vmin = float(dados_coluna.dropna().min())
+vmax = float(dados_coluna.dropna().max())
+norm = mcolors.Normalize(vmin=vmin, vmax=vmax if vmin != vmax else vmin + 1)
+colormap = plt.colormaps["YlOrRd"]
+
+def calc_cor(val):
+    if np.isnan(val):
+        return [180, 180, 180, alpha_hex]
+    rgba = colormap(norm(val))
+    return [int(c * 255) for c in rgba[:3]] + [alpha_hex]
+
+gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(calc_cor)
+
+# Formatação com 2 casas decimais (ou "N/A" se for nulo)
+gdf_hex["valor_formatado"] = gdf_hex[coluna_alvo].apply(
+    lambda x: f"{x:.2f}" if pd.notnull(x) else "N/A"
+)
+    
+
+# 4. Ajuste da Câmera (baseado na extensão do limite municipal)
+bounds = gdf_limite.total_bounds
+centro_lat = (bounds[1] + bounds[3]) / 2
+centro_lon = (bounds[0] + bounds[2]) / 2
+
+view_state = pdk.ViewState(
+    latitude=centro_lat,
+    longitude=centro_lon,
+    zoom=10,
+    pitch=0
+)
+
+# 5.1 Camada BASE: ESRI Gray (Light) Canvas
+# Nota: O ArcGIS utiliza a rota /tile/{z}/{y}/{x}
+url_esri_gray = "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+
+camada_esri_base = pdk.Layer(
+    "TileLayer",
+    id="esri-gray-canvas",
+    data=url_esri_gray,
+    min_zoom=0,
+    max_zoom=16,
+    tile_size=256,
+    pickable=False
+)
+
+# 5.2 Hexágonos
+camada_hex = pdk.Layer(
+    "GeoJsonLayer",
+    gdf_hex.__geo_interface__,
+    id="layer-hex",
+    stroked=True,
+    filled=True,
+    get_fill_color="properties.fill_color",
+    get_line_color=[80, 80, 80, 120],
+    line_width_min_pixels=0.5,
+    pickable=True,
+    auto_highlight=True,
+    highlight_color=[255, 255, 0, 200]
+)
+
+# 5.3 Limite Municipal
+camada_limite = pdk.Layer(
+    "GeoJsonLayer",
+    gdf_limite.__geo_interface__,
+    id="layer-limite",
+    stroked=True,
+    filled=False,
+    get_line_color=[30, 30, 30, 255],
+    line_width_min_pixels=1.2,
+    pickable=False
+)
+
+# Base do mapa
+camadas_mapa = [camada_esri_base, camada_hex, camada_limite]
+
+# 5.4 Adição das redes lineares (sempre sobrepostas a todas as camadas anteriores)
+if mostrar_biarticulado:
+    layer_biarticulado = pdk.Layer(
+        "GeoJsonLayer",
+        gdf_biarticulado.__geo_interface__,
+        id="layer-biarticulado",
+        stroked=True,
+        filled=False,
+        get_line_color=hex_to_rgba("#e82227", 255),  # Eixos Biarticulado
+        line_width_min_pixels=2.5,
+        pickable=False
+    )
+    camadas_mapa.append(layer_biarticulado)
+
+if mostrar_linha_verde:
+    layer_linha_verde = pdk.Layer(
+        "GeoJsonLayer",
+        gdf_linha_verde.__geo_interface__,
+        id="layer-linha-verde",
+        stroked=True,
+        filled=False,
+        get_line_color=hex_to_rgba("#009c05", 255),  # Linha Verde
+        line_width_min_pixels=2.5,
+        pickable=False
+    )
+    camadas_mapa.append(layer_linha_verde)
+
+if mostrar_contorno:
+    layer_contorno = pdk.Layer(
+        "GeoJsonLayer",
+        gdf_contorno.__geo_interface__,
+        id="layer-contorno",
+        stroked=True,
+        filled=False,
+        get_line_color=hex_to_rgba("#f07436", 255),  # Contorno Rodoviário
+        line_width_min_pixels=2.0,
+        pickable=False
+    )
+    camadas_mapa.append(layer_contorno)
+    
+if mostrar_277:
+    layer_277 = pdk.Layer(
+        "GeoJsonLayer",
+        gdf_277.__geo_interface__,
+        id="layer-277",
+        stroked=True,
+        filled=False,
+        get_line_color=hex_to_rgba("#7F00FF", 255),  # BR-277
+        line_width_min_pixels=2.0,
+        pickable=False
+    )
+    camadas_mapa.append(layer_277)
+    
+    
+if mostrar_comend:
+    layer_comend = pdk.Layer(
+        "GeoJsonLayer",
+        gdf_comend.__geo_interface__,
+        id="layer-comend",
+        stroked=True,
+        filled=False,
+        get_line_color=hex_to_rgba("#7b7b7b", 255),  # BR-277
+        line_width_min_pixels=2.0,
+        pickable=False
+    )
+    camadas_mapa.append(layer_comend)
+
+tooltip = {
+    "html": f"<b>{coluna_alvo}:</b> {{valor_formatado}} km/h",
+    "style": {
+        "backgroundColor": "rgba(20, 20, 20, 0.85)",
+        "color": "#ffffff",
+        "fontFamily": "sans-serif",
+        "fontSize": "13px",
+        "padding": "6px 10px",
+        "borderRadius": "4px"
+    }
+}
+
+deck = pdk.Deck(
+    layers=camadas_mapa,
+    initial_view_state=view_state,
+    map_style=None,
+    tooltip=tooltip
+)
+
+# 6. Layout Principal: 2 Colunas (60% Mapa, 40% Estatística)
+col_mapa, col_graficos = st.columns([3, 2], gap="medium")
+
+with col_mapa:
+    st.subheader("Spatial Distribution")
+    st.pydeck_chart(deck, use_container_width=True)
+
+# --- BARRA DE LEGENDA DO MAPA ---
+    # Amostra cores ao longo da rampa (YlOrRd) para gerar o gradiente CSS
+    n_passos = 10
+    gradiente_amostras = [colormap(i / (n_passos - 1)) for i in range(n_passos)]
+    gradiente_css = ", ".join([f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})" for r, g, b, _ in gradiente_amostras])
+
+    # Interpolação para 5 marcos intermediários de valores
+    marcos = np.linspace(vmin, vmax, 5)
+
+    st.markdown(
+        f"""
+        <div style="margin-top: 10px; margin-bottom: 25px; padding: 10px 14px; background: rgba(245, 245, 245, 0.7); border-radius: 6px; border: 1px solid #e0e0e0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">
+                <span>Legend (km/h): {coluna_alvo}</span>
+                <span style="font-weight: normal; color: #666; font-size: 12px;">Transparency: 65%</span>
+            </div>
+            <!-- Barra Gradiente -->
+            <div style="
+                height: 14px;
+                width: 100%;
+                border-radius: 3px;
+                background: linear-gradient(to right, {gradiente_css});
+                border: 1px solid #999;
+                box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+            "></div>
+            <!-- Rótulos dos Valores -->
+            <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px; color: #444; font-family: monospace;">
+                <span>{marcos[0]:.2f}</span>
+                <span>{marcos[1]:.2f}</span>
+                <span>{marcos[2]:.2f}</span>
+                <span>{marcos[3]:.2f}</span>
+                <span>{marcos[4]:.2f}</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
-print('The dataset has {} rows.'.format(len(gdf)))
-print('The dataset has {} columns'.format(gdf.columns))
+with col_graficos:
+    st.subheader(f"Distribution: {coluna_alvo}")
+    
+    serie_limpa = dados_coluna.dropna()
+    
+    fig = make_subplots(
+        rows=2, 
+        cols=1, 
+        shared_xaxes=True,
+        row_heights=[0.25, 0.75],
+        vertical_spacing=0.03
+    )
 
-print(gdf.info())
+    # 1. Boxplot (topo)
+    fig.add_trace(
+        go.Box(
+            x=serie_limpa,
+            name="",
+            orientation="h",
+            # Preenchimento interior alaranjado
+            fillcolor="rgba(253, 174, 107, 0.65)",
+            # Linhas finas e pretas (contorno, mediana e bigodes)
+            line=dict(
+                color="#1a1a1a",
+                width=1.0
+            ),
+            # Outliers: pontos menores e em preto
+            boxpoints="outliers",
+            jitter=0.15,
+            marker=dict(
+                color="#1a1a1a",
+                size=3.5,
+                opacity=0.75
+            ),
+            showlegend=False
+        ),
+        row=1, col=1
+    )
 
-print(gdf.isnull().any())
+    # 2. Histograma (baixo) com bins redondos (de 2 em 2 km/h)
+    fig.add_trace(
+        go.Histogram(
+            x=serie_limpa,
+            name="Frequência",
+            marker_color="#fdae6b",
+            opacity=0.85,
+            marker_line=dict(color="#333333", width=0.6),
+            xbins=dict(
+                start=np.floor(serie_limpa.min()),
+                end=np.ceil(serie_limpa.max()),
+                size=2.0  # Agrupa de 2 em 2 km/h
+            ),
+            showlegend=False
+        ),
+        row=2, col=1
+    )
 
-gdf2 = gdf.drop(columns=['geometry', 'h3_id', 'V85_nds_manha', 'V85_nds_noite']).copy() # escolher apenas uma das variáveis nds para manter
+    # Linhas de referência para Média e Mediana
+    media_val = serie_limpa.mean()
+    mediana_val = serie_limpa.median()
 
-gdf2.columns
-print(gdf2.isnull().any())
+    fig.add_vline(
+        x=media_val, 
+        line_width=1.5, 
+        line_dash="dash", 
+        line_color="#2b83ba",
+        annotation_text=f"Mean: {media_val:.1f}", 
+        annotation_position="top left",
+        row=2, col=1
+    )
+    fig.add_vline(
+        x=mediana_val, 
+        line_width=1.5, 
+        line_dash="dot", 
+        line_color="#008837",
+        annotation_text=f"Median: {mediana_val:.1f}", 
+        annotation_position="top right",
+        row=2, col=1
+    )
 
-# tem que tirar os valores nulos
-gdf2['HMP'].isna().sum()
-gdf2['VMP'].isna().sum()
+    fig.update_layout(
+        height=480,
+        margin=dict(l=20, r=20, t=20, b=20),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        bargap=0.05
+    )
 
-gdf2.dropna(subset=['HMP'], inplace = True)
-gdf2.dropna(subset=['VMP'], inplace = True)
+    fig.update_yaxes(showticklabels=False, row=1, col=1)
+    fig.update_yaxes(title_text="Frequency", gridcolor="rgba(200, 200, 200, 0.25)", row=2, col=1)
+    
+    # Eixo X com marcações claras de 10 em 10 (10, 20, 30 ... 140)
+    fig.update_xaxes(
+        title_text=coluna_alvo, 
+        dtick=10, 
+        gridcolor="rgba(200, 200, 200, 0.25)", 
+        row=2, col=1
+    )
 
-gdf2['HMP'].isna().sum()
-gdf2['VMP'].isna().sum()
+    st.plotly_chart(fig, use_container_width=True)
 
-# V85_nds_tarde ainda tem valores nulos. São eles que queremos inferir os valores. Separar linhas com valor conhecido das linhas para inferência
-mask_nulo = gdf2["V85_nds_tarde"].isna()
-dados_rotulados = gdf2[~mask_nulo].copy()
-dados_inferir = gdf2[mask_nulo].copy()
+    # Linha 1: Medidas de tendência central e dispersão
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Mean", f"{serie_limpa.mean():.2f}")
+    m2.metric("Median", f"{serie_limpa.median():.2f}")
+    m3.metric("St Dv", f"{serie_limpa.std():.2f}")
 
-
-# Checking the correlation between all the features
-sns.heatmap(dados_rotulados.corr(), annot=True)
-sns.pairplot(dados_rotulados.drop(columns='V85_nds_tarde'))
-
-# Variáveis explicativas
-X = dados_rotulados.drop(columns=["V85_nds_tarde"]).copy()
-X.columns
-
-# Variável resposta
-y = dados_rotulados["V85_nds_tarde"].copy()
-
-X_inferir = dados_inferir.drop(columns=["V85_nds_tarde"]).copy()
-
-# Divisão de treino e teste
-X_train, X_test, y_train, y_test = train_test_split(X,
-                                                    y,
-                                                    random_state=42,
-                                                    test_size=0.2)
-
-X_train.describe()
-
-# Treinar a Árvore de Decisão
-# max_depth evita que a árvore decore os dados (overfitting)
-dt = DecisionTreeRegressor(
-    max_depth=4,  # Reduz a profundidade máxima
-    min_samples_leaf=20,  # Exige pelo menos 20 vias por folha
-    min_samples_split=40,  # Exige pelo menos 40 vias para permitir corte
-    random_state=42,
-)
-
-dt.fit(X_train, y_train)
-
-# Avaliação rápida no conjunto de teste
-y_pred_test = dt.predict(X_test)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
-r2 = r2_score(y_test, y_pred_test)
-
-print(f"RMSE (Teste): {rmse:.2f}")
-print(f"R² (Teste): {r2:.2f}")
-
-# Avaliar no treino para comparar
-y_pred_train = dt.predict(X_train)
-r2_train = r2_score(y_train, y_pred_train)
-rmse_train = np.sqrt(mean_squared_error(y_train, y_pred_train))
-
-print(f"Treino -> R²: {r2_train:.2f} | RMSE: {rmse_train:.2f}")
-print(f"Teste  -> R²: {r2:.2f} | RMSE: {rmse:.2f}")
-
-# Inferência nos dados sem resposta
-X_inferir = dados_inferir.drop(columns=["V85_nds_tarde"])
-
- # Treinar a Random Forest
-rf = RandomForestRegressor(
-    n_estimators=300,
-    max_depth=10,
-    min_samples_leaf=10,
-    max_features="sqrt",
-    random_state=42,
-    n_jobs=-1,
-)
-
-# Treinar a Random Forest
-# rf = RandomForestRegressor(
-#    n_estimators=400,
-#    max_depth=12,
-#    min_samples_leaf=5,
-#    max_features=0.4, # Avalia 40% das variáveis a cada nó
-#    random_state=42,
-#    n_jobs=-1,
-#)
-
-rf.fit(X_train, y_train)
-
-# Predição no teste Random Forest
-y_pred_rf = rf.predict(X_test)
-
-# Mëtricas
-# 1. Gerar predições para ambos os conjuntos
-y_pred_train_rf = rf.predict(X_train)
-y_pred_test_rf = rf.predict(X_test)
-
-# 2. Métricas de Treino
-r2_train = r2_score(y_train, y_pred_train_rf)
-rmse_train = np.sqrt(mean_squared_error(y_train, y_pred_train_rf))
-mae_train = mean_absolute_error(y_train, y_pred_train_rf)
-
-# 3. Métricas de Teste
-r2_test = r2_score(y_test, y_pred_test_rf)
-rmse_test = np.sqrt(mean_squared_error(y_test, y_pred_test_rf))
-mae_test = mean_absolute_error(y_test, y_pred_test_rf)
-
-# 4. Exibição comparativa
-print(f"--- Random Forest: TREINO ---")
-print(f"R²:   {r2_train:.2f}")
-print(f"RMSE: {rmse_train:.2f} km/h")
-print(f"MAE:  {mae_train:.2f} km/h\n")
-
-print(f"--- Random Forest: TESTE ---")
-print(f"R²:   {r2_test:.2f}")
-print(f"RMSE: {rmse_test:.2f} km/h")
-print(f"MAE:  {mae_test:.2f} km/h")
-
-# Gerar inferências para os trechos sem medição
-predicoes_dt = dt.predict(X_inferir)
-predicoes_rf = rf.predict(X_inferir)
-
-# Criar o novo GeoDataFrame preservando o original intacto
-gdf_completo = gdf.copy()
-
-# Inicializa as duas novas colunas com os valores originais conhecidos
-gdf_completo["V85_nds_tarde_DT"] = gdf_completo["V85_nds_tarde"]
-gdf_completo["V85_nds_tarde_RF"] = gdf_completo["V85_nds_tarde"]
-
-# Preenche os nulos de cada coluna com a respectiva predição
-gdf_completo.loc[dados_inferir.index, "V85_nds_tarde_DT"] = predicoes_dt
-gdf_completo.loc[dados_inferir.index, "V85_nds_tarde_RF"] = predicoes_rf
-
-# (Opcional) Indicador da origem da linha
-gdf_completo["origem_dado"] = "original"
-gdf_completo.loc[dados_inferir.index, "origem_dado"] = "inferido"
-
-# Comparar as predições geradas pelos dois modelos nas linhas inferidas
-print(
-    gdf_completo.loc[
-        dados_inferir.index, ["V85_nds_tarde_DT", "V85_nds_tarde_RF"]
-    ].head(10)
-)
-
-# Visualizar a Árvore
-import matplotlib.pyplot as plt
-from sklearn.tree import plot_tree
-
-# Ajuste o tamanho da figura conforme a profundidade da sua árvore
-plt.figure(figsize=(20, 10))
-
-plot_tree(
-    dt,
-    feature_names=X.columns,  # Nome das variáveis explicativas
-    filled=True,  # Colore os nós indicando a média da predição
-    rounded=True,  # Deixa os nós com cantos arredondados
-    fontsize=10,
-    max_depth=3,  # Opcional: limite a exibição se a árvore for muito profunda
-)
-
-plt.title("Visualização da Árvore de Decisão", fontsize=14)
-plt.tight_layout()
-plt.show()
-
-from sklearn.tree import export_text
-
-regras_texto = export_text(dt, feature_names=list(X.columns))
-print(regras_texto)
-
-gdf_completo['V85_nds_tarde'].isna().sum()
-
-# salvar o resultado
-gdf_completo.to_file(
-    '/Users/rafaelszeliga/Library/CloudStorage/OneDrive-Pessoal/PósGrad/2023 PPGCG/Artigo_2025/Decision_Tree/grade_h9_DT_nds_v3_dados_inferidos_DT_RF.gpkg',
-    driver="GPKG"
-)
-
-# Ainda é possível alterar os parâmetros da árvore #
-
-
-gdf_completo.columns
-
-# Validação cruzada de 5 folds comparando a média e o desvio padrão do R2
-from sklearn.model_selection import cross_val_score
-
-# Modelo A (mais regularizado)
-rf_A = RandomForestRegressor(
-    n_estimators=300,
-    max_depth=10,
-    min_samples_leaf=10,
-    max_features="sqrt",
-    random_state=42,
-    n_jobs=-1,
-)
-
-# Modelo B (mais flexível)
-rf_B = RandomForestRegressor(
-    n_estimators=400,
-    max_depth=12,
-    min_samples_leaf=5,
-    max_features=0.4,
-    random_state=42,
-    n_jobs=-1,
-)
-
-scores_A = cross_val_score(rf_A, X, y, cv=5, scoring="r2")
-scores_B = cross_val_score(rf_B, X, y, cv=5, scoring="r2")
-
-print(f"Modelo A (0.60/0.42): R² Médio = {scores_A.mean():.3f} (± {scores_A.std():.3f})")
-print(f"Modelo B (0.70/0.43): R² Médio = {scores_B.mean():.3f} (± {scores_B.std():.3f})")
-
-
-gdf_completo.columns
-gdf_completo['V85_nds_tarde_RF'].describe()
+    # Linha 2: Extremos e integridade dos dados
+    m4, m5, m6 = st.columns(3)
+    m4.metric("Minimum", f"{serie_limpa.min():.2f}")
+    m5.metric("Maximum", f"{serie_limpa.max():.2f}")
+    m6.metric("Null", f"{dados_coluna.isna().sum()}")
+    
+# 7. Tooltip apontando para o valor formatado
+tooltip = {
+    "html": f"<b>{coluna_alvo}:</b> {{valor_formatado}}",
+    "style": {
+        "backgroundColor": "rgba(20, 20, 20, 0.85)",
+        "color": "#ffffff",
+        "fontFamily": "sans-serif",
+        "fontSize": "13px",
+        "padding": "6px 10px",
+        "borderRadius": "4px"
+    }
+}
