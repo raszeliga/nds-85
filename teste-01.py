@@ -44,6 +44,9 @@ def carregar_camada(caminho_gpkg):
 caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/grade_h9_DT_nds_v3_dados_inferidos_DT_RF_simplificado.gpkg"
 caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
 
+# bairos de Curitiba
+caminho_bairros = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/divisa_bairros_2.gpkg"
+
 # Caminhos dos corredores de transporte
 caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/rota_bi-articulados_dissolv.gpkg"
 caminho_linha_verde = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Linha_Verde_Dissolv_2.gpkg"
@@ -51,9 +54,13 @@ caminho_contorno = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Cont
 caminho_br277 = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/BR-277.gpkg"
 caminho_comend = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/comend_franco.gpkg"
 
+
 try:
     gdf_hex = carregar_camada(caminho_hex)
     gdf_limite = carregar_camada(caminho_limite)
+    
+    # Carregar os bairros (ippuc)
+    gdf_bairros = carregar_camada(caminho_bairros)
     
     # Carregamento dos eixos de transporte
     gdf_biarticulado = carregar_camada(caminho_biarticulado)
@@ -61,6 +68,7 @@ try:
     gdf_contorno = carregar_camada(caminho_contorno)
     gdf_277 = carregar_camada(caminho_br277)
     gdf_comend = carregar_camada(caminho_comend)
+
 except Exception as e:
     st.error(f"Erro ao carregar os arquivos GPKG: {e}")
     st.stop()
@@ -104,6 +112,10 @@ mostrar_comend = st.sidebar.checkbox(
     ":gray[━━━] Av das Torres (Comendador Franco)", 
     value=False
 )
+
+st.sidebar.markdown("---")
+st.sidebar.header("Administrative Divisions")
+mostrar_bairros = st.sidebar.checkbox("Boundaries and Names of Neighborhoods", value=False)
 
 # 3. Tratamento de Cores dos Hexágonos (Transparência 0.65 -> alpha ~ 166 de 255)
 # colormap = cm.get_cmap("viridis")
@@ -238,7 +250,6 @@ if mostrar_277:
     )
     camadas_mapa.append(layer_277)
     
-    
 if mostrar_comend:
     layer_comend = pdk.Layer(
         "GeoJsonLayer",
@@ -251,6 +262,55 @@ if mostrar_comend:
         pickable=False
     )
     camadas_mapa.append(layer_comend)
+
+# Se a camada estiver ativa, criamos o contorno e os rótulos de texto
+if mostrar_bairros:
+    # 1. Contorno vazado dos bairros
+    layer_contorno_bairros = pdk.Layer(
+        "GeoJsonLayer",
+        gdf_bairros.__geo_interface__,
+        id="layer-bairros-linhas",
+        stroked=True,
+        filled=False,
+        get_line_color=[90, 90, 90, 180],
+        line_width_min_pixels=1.0,
+        pickable=False
+    )
+    camadas_mapa.append(layer_contorno_bairros)
+
+    # 2. Extração dos pontos para um DataFrame comum (crucial para o TextLayer)
+    pontos = gdf_bairros.geometry.representative_point()
+    
+    # Criamos um DataFrame limpo do Pandas apenas com dados tabulares
+    df_labels = pd.DataFrame({
+        "lon": pontos.x.values,
+        "lat": pontos.y.values,
+        "nome": gdf_bairros["NOME"].astype(str).str.strip().str.upper().values
+    })
+    
+    # Remove eventuais linhas com NaN ou vazias
+    df_labels = df_labels.dropna(subset=["lon", "lat", "nome"])
+    df_labels = df_labels[df_labels["nome"] != ""]
+
+    # 3. TextLayer configurado em pixels de tela
+    layer_texto_bairros = pdk.Layer(
+        "TextLayer",
+        data=df_labels,
+        id="layer-bairros-texto",
+        get_position="[lon, lat]",       # Sintaxe Deck.gl avaliada sobre cada registro
+        get_text="nome",
+        get_size=12,
+        size_units="'pixels'",           # Força o tamanho a ser em pixels de tela
+        get_color=[30, 30, 30, 240],     # Cinza escuro quase opaco
+        get_text_anchor="'middle'",
+        get_alignment_baseline="'center'",
+        billboard=True,                  # Garante que o texto fique sempre virado para a câmera
+        background=True,                 # Adiciona um pequeno fundo suave para contraste
+        get_background_color=[255, 255, 255, 170], # Fundo branco semi-transparente
+        background_padding=[3, 2, 3, 2],
+        pickable=False
+    )
+    camadas_mapa.append(layer_texto_bairros)
 
 tooltip = {
     "html": f"<b>{coluna_alvo}:</b> {{valor_formatado}} km/h",
@@ -359,7 +419,7 @@ with col_graficos:
     fig.add_trace(
         go.Histogram(
             x=serie_limpa,
-            name="Frequência",
+            name="Frequency",
             marker_color="#fdae6b",
             opacity=0.85,
             marker_line=dict(color="#333333", width=0.6),
