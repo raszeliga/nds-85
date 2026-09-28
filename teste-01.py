@@ -118,39 +118,34 @@ st.sidebar.markdown("---")
 st.sidebar.header("Administrative Divisions")
 mostrar_bairros = st.sidebar.checkbox("Boundaries and Names of Neighborhoods", value=False)
 
-# 3. Tratamento de Cores dos Hexágonos (Transparência 0.65 -> alpha ~ 166 de 255)
-# colormap = cm.get_cmap("viridis")
+# 3. Tratamento de Cores por Estratificação Fixa (0-10, 10-20, 20-40, 40-50, 50+)
 alpha_hex = int(255 * 0.65)
 dados_coluna = gdf_hex[coluna_alvo]
 
-vmin = float(dados_coluna.dropna().min())
-vmax = float(dados_coluna.dropna().max())
-
-# Definição das classes discretas (5 classes)
+# Limites das classes fixadas
+cortes_velocidade = [0, 10, 20, 40, 50, np.inf]
 N_CLASSES = 5
-limites_classes = np.linspace(vmin, vmax, N_CLASSES + 1)
 colormap = plt.colormaps["YlOrRd"]
 
-# Amostra N_CLASSES cores ao longo do colormap
+# Amostra 5 cores da rampa YlOrRd
 cores_rgba = [colormap((i + 0.5) / N_CLASSES) for i in range(N_CLASSES)]
 cores_hex_rgba = [[int(r * 255), int(g * 255), int(b * 255), alpha_hex] for r, g, b, _ in cores_rgba]
 
-# BoundaryNorm mapeia faixas de valores para índices de classes
-norm_discreta = mcolors.BoundaryNorm(limites_classes, ncolors=N_CLASSES)
-
-def calc_cor_discreta(val):
+def calc_cor_faixas(val):
     if pd.isna(val):
         return [180, 180, 180, alpha_hex]
-    
-    # BoundaryNorm retorna o índice da classe
-    idx = int(norm_discreta(val))
-    
-    # Garante que o índice fique estritamente entre 0 e N_CLASSES - 1
-    idx = min(max(idx, 0), N_CLASSES - 1)
-    
-    return cores_hex_rgba[idx]
+    if val <= 10:
+        return cores_hex_rgba[0] # 0 - 10
+    elif val <= 20:
+        return cores_hex_rgba[1] # 10 - 20
+    elif val <= 40:
+        return cores_hex_rgba[2] # 20 - 40
+    elif val <= 50:
+        return cores_hex_rgba[3] # 40 - 50
+    else:
+        return cores_hex_rgba[4] # 50+
 
-gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(calc_cor_discreta)
+gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(calc_cor_faixas)
 
 # Formatação com 2 casas decimais para o tooltip
 gdf_hex["valor_formatado"] = gdf_hex[coluna_alvo].apply(
@@ -363,16 +358,18 @@ with col_mapa:
         for cor in cores_rgb_str
     ])
 
+    # Rótulos dos intervalos: 0, 10, 20, 40, 50 e 50+
+    rotulos_classes = ["0", "10", "20", "40", "50", "50+"]
     marcos_html = "".join([
-        f'<span style="font-size: 11px; color: #444; font-family: monospace;">{lim:.1f}</span>'
-        for lim in limites_classes
+        f'<span style="font-size: 11px; color: #444; font-family: monospace;">{rot}</span>'
+        for rot in rotulos_classes
     ])
 
     html_legenda = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 8px 12px; background: rgba(245, 245, 245, 0.9); border-radius: 6px; border: 1px solid #dcdcdc; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">
             <span>Legend (km/h): {coluna_alvo}</span>
-            <span style="font-weight: normal; color: #666; font-size: 12px;">Classes: {N_CLASSES} | Transparency: 65%</span>
+            <span style="font-weight: normal; color: #666; font-size: 12px;">Classes: 0-10 | 10-20 | 20-40 | 40-50 | 50+</span>
         </div>
         <div style="display: flex; width: 100%; border-radius: 4px; border: 1px solid #777; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);">
             {celulas_cores}
