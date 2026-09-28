@@ -21,6 +21,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import streamlit.components.v1 as components
 
 st.set_page_config(layout="wide", page_title="Hexagonal Network - Viewer")
 
@@ -124,22 +125,37 @@ dados_coluna = gdf_hex[coluna_alvo]
 
 vmin = float(dados_coluna.dropna().min())
 vmax = float(dados_coluna.dropna().max())
-norm = mcolors.Normalize(vmin=vmin, vmax=vmax if vmin != vmax else vmin + 1)
+
+# Definição das classes discretas (5 classes)
+N_CLASSES = 5
+limites_classes = np.linspace(vmin, vmax, N_CLASSES + 1)
 colormap = plt.colormaps["YlOrRd"]
 
-def calc_cor(val):
-    if np.isnan(val):
+# Amostra N_CLASSES cores ao longo do colormap
+cores_rgba = [colormap((i + 0.5) / N_CLASSES) for i in range(N_CLASSES)]
+cores_hex_rgba = [[int(r * 255), int(g * 255), int(b * 255), alpha_hex] for r, g, b, _ in cores_rgba]
+
+# BoundaryNorm mapeia faixas de valores para índices de classes
+norm_discreta = mcolors.BoundaryNorm(limites_classes, ncolors=N_CLASSES)
+
+def calc_cor_discreta(val):
+    if pd.isna(val):
         return [180, 180, 180, alpha_hex]
-    rgba = colormap(norm(val))
-    return [int(c * 255) for c in rgba[:3]] + [alpha_hex]
+    
+    # BoundaryNorm retorna o índice da classe
+    idx = int(norm_discreta(val))
+    
+    # Garante que o índice fique estritamente entre 0 e N_CLASSES - 1
+    idx = min(max(idx, 0), N_CLASSES - 1)
+    
+    return cores_hex_rgba[idx]
 
-gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(calc_cor)
+gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(calc_cor_discreta)
 
-# Formatação com 2 casas decimais (ou "N/A" se for nulo)
+# Formatação com 2 casas decimais para o tooltip
 gdf_hex["valor_formatado"] = gdf_hex[coluna_alvo].apply(
     lambda x: f"{x:.2f}" if pd.notnull(x) else "N/A"
-)
-    
+)    
 
 # 4. Ajuste da Câmera (baseado na extensão do limite municipal)
 bounds = gdf_limite.total_bounds
@@ -289,7 +305,6 @@ if mostrar_bairros:
     })
     
     # Remove eventuais linhas com NaN ou vazias
-    df_labels = df_labels.dropna(subset=["lon", "lat", "nome"])
     df_labels = df_labels[df_labels["nome"] != ""]
 
     # 3. TextLayer configurado em pixels de tela
@@ -318,7 +333,7 @@ tooltip = {
         "backgroundColor": "rgba(20, 20, 20, 0.85)",
         "color": "#ffffff",
         "fontFamily": "sans-serif",
-        "fontSize": "13px",
+        "fontSize": "11px",
         "padding": "6px 10px",
         "borderRadius": "4px"
     }
@@ -334,48 +349,43 @@ deck = pdk.Deck(
 # 6. Layout Principal: 2 Colunas (60% Mapa, 40% Estatística)
 col_mapa, col_graficos = st.columns([3, 2], gap="medium")
 
+# ======================== COLUNA DA ESQUERDA: MAPA + LEGENDA ========================
 with col_mapa:
     st.subheader("Spatial Distribution")
     st.pydeck_chart(deck, use_container_width=True)
 
-# --- BARRA DE LEGENDA DO MAPA ---
-    # Amostra cores ao longo da rampa (YlOrRd) para gerar o gradiente CSS
-    n_passos = 10
-    gradiente_amostras = [colormap(i / (n_passos - 1)) for i in range(n_passos)]
-    gradiente_css = ", ".join([f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})" for r, g, b, _ in gradiente_amostras])
+# --- BARRA DE LEGENDA DISCRETA DO MAPA ---
+    cores_rgb_str = [f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})" for r, g, b, _ in cores_rgba]
+    largura_pct = 100.0 / N_CLASSES
 
-    # Interpolação para 5 marcos intermediários de valores
-    marcos = np.linspace(vmin, vmax, 5)
+    celulas_cores = "".join([
+        f'<div style="width: {largura_pct}%; background-color: {cor}; height: 16px; border-right: 1px solid rgba(0,0,0,0.2);"></div>'
+        for cor in cores_rgb_str
+    ])
 
-    st.markdown(
-        f"""
-        <div style="margin-top: 10px; margin-bottom: 25px; padding: 10px 14px; background: rgba(245, 245, 245, 0.7); border-radius: 6px; border: 1px solid #e0e0e0;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">
-                <span>Legend (km/h): {coluna_alvo}</span>
-                <span style="font-weight: normal; color: #666; font-size: 12px;">Transparency: 65%</span>
-            </div>
-            <!-- Barra Gradiente -->
-            <div style="
-                height: 14px;
-                width: 100%;
-                border-radius: 3px;
-                background: linear-gradient(to right, {gradiente_css});
-                border: 1px solid #999;
-                box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
-            "></div>
-            <!-- Rótulos dos Valores -->
-            <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px; color: #444; font-family: monospace;">
-                <span>{marcos[0]:.2f}</span>
-                <span>{marcos[1]:.2f}</span>
-                <span>{marcos[2]:.2f}</span>
-                <span>{marcos[3]:.2f}</span>
-                <span>{marcos[4]:.2f}</span>
-            </div>
+    marcos_html = "".join([
+        f'<span style="font-size: 11px; color: #444; font-family: monospace;">{lim:.1f}</span>'
+        for lim in limites_classes
+    ])
+
+    html_legenda = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 8px 12px; background: rgba(245, 245, 245, 0.9); border-radius: 6px; border: 1px solid #dcdcdc; box-sizing: border-box;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">
+            <span>Legend (km/h): {coluna_alvo}</span>
+            <span style="font-weight: normal; color: #666; font-size: 12px;">Classes: {N_CLASSES} | Transparency: 65%</span>
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+        <div style="display: flex; width: 100%; border-radius: 4px; border: 1px solid #777; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);">
+            {celulas_cores}
+        </div>
+        <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 5px;">
+            {marcos_html}
+        </div>
+    </div>
+    """
 
+    components.html(html_legenda, height=85)
+    
+# ======================== COLUNA DA DIREITA: GRÁFICOS + MÉTRICAS ========================
 with col_graficos:
     st.subheader(f"Distribution: {coluna_alvo}")
     
@@ -395,14 +405,11 @@ with col_graficos:
             x=serie_limpa,
             name="",
             orientation="h",
-            # Preenchimento interior alaranjado
             fillcolor="rgba(253, 174, 107, 0.65)",
-            # Linhas finas e pretas (contorno, mediana e bigodes)
             line=dict(
                 color="#1a1a1a",
                 width=1.0
             ),
-            # Outliers: pontos menores e em preto
             boxpoints="outliers",
             jitter=0.15,
             marker=dict(
@@ -426,14 +433,13 @@ with col_graficos:
             xbins=dict(
                 start=np.floor(serie_limpa.min()),
                 end=np.ceil(serie_limpa.max()),
-                size=2.0  # Agrupa de 2 em 2 km/h
+                size=2.0
             ),
             showlegend=False
         ),
         row=2, col=1
     )
 
-    # Linhas de referência para Média e Mediana
     media_val = serie_limpa.mean()
     mediana_val = serie_limpa.median()
 
@@ -467,7 +473,6 @@ with col_graficos:
     fig.update_yaxes(showticklabels=False, row=1, col=1)
     fig.update_yaxes(title_text="Frequency", gridcolor="rgba(200, 200, 200, 0.25)", row=2, col=1)
     
-    # Eixo X com marcações claras de 10 em 10 (10, 20, 30 ... 140)
     fig.update_xaxes(
         title_text=coluna_alvo, 
         dtick=10, 
@@ -477,27 +482,29 @@ with col_graficos:
 
     st.plotly_chart(fig, use_container_width=True)
 
+    # Métricas organizadas em 2 linhas de 3 colunas
+    # Reduz o tamanho das fontes dos cards de métricas
+    st.markdown("""
+        <style>
+        [data-testid="stMetricValue"] {
+            font-size: 1.35rem !important;  /* Tamanho do número (padrão é ~2rem) */
+            line-height: 1.2 !important;
+        }
+        [data-testid="stMetricLabel"] {
+            font-size: 0.85rem !important;  /* Tamanho do título (Mean, Median, etc.) */
+        }
+        </style>
+    """, unsafe_allow_html=True)
+    
     # Linha 1: Medidas de tendência central e dispersão
     m1, m2, m3 = st.columns(3)
     m1.metric("Mean", f"{serie_limpa.mean():.2f}")
     m2.metric("Median", f"{serie_limpa.median():.2f}")
     m3.metric("St Dv", f"{serie_limpa.std():.2f}")
-
+    
     # Linha 2: Extremos e integridade dos dados
     m4, m5, m6 = st.columns(3)
     m4.metric("Minimum", f"{serie_limpa.min():.2f}")
     m5.metric("Maximum", f"{serie_limpa.max():.2f}")
     m6.metric("Null", f"{dados_coluna.isna().sum()}")
-    
-# 7. Tooltip apontando para o valor formatado
-tooltip = {
-    "html": f"<b>{coluna_alvo}:</b> {{valor_formatado}}",
-    "style": {
-        "backgroundColor": "rgba(20, 20, 20, 0.85)",
-        "color": "#ffffff",
-        "fontFamily": "sans-serif",
-        "fontSize": "13px",
-        "padding": "6px 10px",
-        "borderRadius": "4px"
-    }
-}
+
