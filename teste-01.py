@@ -302,25 +302,25 @@ if mostrar_bairros:
     # Remove eventuais linhas com NaN ou vazias
     df_labels = df_labels[df_labels["nome"] != ""]
 
-    # 3. TextLayer configurado em pixels de tela
-    layer_texto_bairros = pdk.Layer(
-        "TextLayer",
-        data=df_labels,
-        id="layer-bairros-texto",
-        get_position="[lon, lat]",       # Sintaxe Deck.gl avaliada sobre cada registro
-        get_text="nome",
-        get_size=12,
-        size_units="'pixels'",           # Força o tamanho a ser em pixels de tela
-        get_color=[30, 30, 30, 240],     # Cinza escuro quase opaco
-        get_text_anchor="'middle'",
-        get_alignment_baseline="'center'",
-        billboard=True,                  # Garante que o texto fique sempre virado para a câmera
-        background=True,                 # Adiciona um pequeno fundo suave para contraste
-        get_background_color=[255, 255, 255, 170], # Fundo branco semi-transparente
-        background_padding=[3, 2, 3, 2],
-        pickable=False
-    )
-    camadas_mapa.append(layer_texto_bairros)
+#    # 3. Mostra os nomes dos bairros (retirado por enquanto) TextLayer configurado em pixels de tela
+#    layer_texto_bairros = pdk.Layer(
+#        "TextLayer",
+#        data=df_labels,
+#        id="layer-bairros-texto",
+#        get_position="[lon, lat]",       # Sintaxe Deck.gl avaliada sobre cada registro
+#        get_text="nome",
+#        get_size=12,
+#        size_units="'pixels'",           # Força o tamanho a ser em pixels de tela
+#        get_color=[30, 30, 30, 240],     # Cinza escuro quase opaco
+#        get_text_anchor="'middle'",
+#        get_alignment_baseline="'center'",
+#        billboard=True,                  # Garante que o texto fique sempre virado para a câmera
+#        background=True,                 # Adiciona um pequeno fundo suave para contraste
+#        get_background_color=[255, 255, 255, 170], # Fundo branco semi-transparente
+#        background_padding=[3, 2, 3, 2],
+#        pickable=False
+#    )
+#    camadas_mapa.append(layer_texto_bairros)
 
 tooltip = {
     "html": f"<b>{coluna_alvo}:</b> {{valor_formatado}} km/h",
