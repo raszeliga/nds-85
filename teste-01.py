@@ -116,7 +116,7 @@ mostrar_comend = st.sidebar.checkbox(
 
 st.sidebar.markdown("---")
 st.sidebar.header("Administrative Divisions")
-mostrar_bairros = st.sidebar.checkbox("Boundaries and Names of Neighborhoods", value=False)
+mostrar_bairros = st.sidebar.checkbox("Neighborhoods Boundaries", value=False)
 
 # 3. Tratamento de Cores por Estratificação Fixa (0-10, 10-20, 20-40, 40-50, 50+)
 alpha_hex = int(255 * 0.65)
