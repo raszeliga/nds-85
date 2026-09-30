@@ -205,7 +205,7 @@ camada_limite = pdk.Layer(
     pickable=False
 )
 
-# Base do mapa
+# Base Map
 camadas_mapa = [camada_esri_base, camada_hex, camada_limite]
 
 # 5.4 Adição das redes lineares (sempre sobrepostas a todas as camadas anteriores)
@@ -359,7 +359,7 @@ with col_mapa:
     ])
 
     # Rótulos dos intervalos: 0, 10, 20, 40, 50 e 50+
-    rotulos_classes = ["0", "10", "20", "40", "50", "50+"]
+    rotulos_classes = ["10", "20", "40", "50", "50+"]
     marcos_html = "".join([
         f'<span style="font-size: 11px; color: #444; font-family: monospace;">{rot}</span>'
         for rot in rotulos_classes
