@@ -1,0 +1,433 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Sep 22 10:35:53 2026
+
+@author: rafaelszeliga
+"""
+
+# para rodar no streamlit
+#### para rodar no terminal:
+#### streamlit run teste-02.py
+
+# pip install pydeck
+
+import streamlit as st
+import pandas as pd
+import geopandas as gpd
+import pydeck as pdk
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import numpy as np
+import streamlit.components.v1 as components
+
+def render_fatores():
+    st.set_page_config(layout="wide", page_title="Hexagonal Network - Viewer")
+    
+    st.title("Contributing Factors Viewer")
+    
+    # 0. Dicionário de Configurações (14 Variáveis)
+    CONFIG_VARIAVEIS = {
+        "Population": {
+            "cmap": "YlGnBu",
+            "label": "Population",
+            "unidade": "Inhabitants"
+        },
+        "Households": {
+            "cmap": "Blues",
+            "label": "Households",
+            "unidade": "Households"
+        },
+        "Stop Signs": {
+            "cmap": "OrRd",
+            "label": "Stop Signs",
+            "unidade": "Units"
+        },
+        "Crosswalk": {
+            "cmap": "YlOrBr",
+            "label": "Crosswalks",
+            "unidade": "Units"
+        },
+        "Roadbumps": {
+            "cmap": "YlOrRd",
+            "label": "Roadbumps",
+            "unidade": "Units"
+        },
+        "Traffic Lights": {
+            "cmap": "hot_r",
+            "label": "Traffic Lights",
+            "unidade": "Units"
+        },
+        "Speed Cameras": {
+            "cmap": "Reds",
+            "label": "Speed Cameras",
+            "unidade": "Units"
+        },
+        "Bus Stops": {
+            "cmap": "Purples",
+            "label": "Bus Stops",
+            "unidade": "Units"
+        },
+        "Intersections": {
+            "cmap": "Oranges",
+            "label": "Intersections",
+            "unidade": "Units"
+        },
+        "Hierarchy": {
+            "cmap": "Greys_r",
+            "label": "Hierarchy Score",
+            "unidade": "Class"
+        },
+        "Posted Speed": {
+            "cmap": "Reds",
+            "label": "Posted Speed",
+            "unidade": "km/h"
+        },
+        "Bike Lanes": {
+            "cmap": "Greens",
+            "label": "Bike Lanes Length",
+            "unidade": "m"
+        },
+        "Schools and Universities": {
+            "cmap": "PuRd",
+            "label": "Schools & Universities",
+            "unidade": "Units"
+        },
+        "POI": {
+            "cmap": "Greys",
+            "label": "Points of Interest (POI)",
+            "unidade": "Units"
+        },
+        "default": {
+            "cmap": "viridis",
+            "label": "Value",
+            "unidade": ""
+        }
+    }
+    
+    # Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
+    def hex_to_rgba(hex_str, alpha=255):
+        hex_str = hex_str.lstrip("#")
+        return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
+    
+    # 1. Carregamento dos Dados
+    @st.cache_data
+    def carregar_camada(caminho_gpkg):
+        gdf = gpd.read_file(caminho_gpkg)
+        if gdf.crs is None or gdf.crs.to_epsg() != 4326:
+            gdf = gdf.to_crs(epsg=4326)
+        return gdf
+    
+    # Caminhos dos arquivos
+    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dash_fatores.gpkg"
+    caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
+    caminho_bairros = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/divisa_bairros_2.gpkg"
+    
+    # Caminhos dos corredores de transporte
+    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/rota_bi-articulados_dissolv.gpkg"
+    caminho_linha_verde = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Linha_Verde_Dissolv_2.gpkg"
+    caminho_contorno = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Contorno_dissolv.gpkg"
+    caminho_br277 = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/BR-277.gpkg"
+    caminho_comend = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/comend_franco.gpkg"
+    
+    try:
+        gdf_hex = carregar_camada(caminho_hex)
+        gdf_limite = carregar_camada(caminho_limite)
+        gdf_bairros = carregar_camada(caminho_bairros)
+        
+        gdf_biarticulado = carregar_camada(caminho_biarticulado)
+        gdf_linha_verde = carregar_camada(caminho_linha_verde)
+        gdf_contorno = carregar_camada(caminho_contorno)
+        gdf_277 = carregar_camada(caminho_br277)
+        gdf_comend = carregar_camada(caminho_comend)
+    
+    except Exception as e:
+        st.error(f"Erro ao carregar os arquivos GPKG: {e}")
+        st.stop()
+    
+    # 2. Sidebar - Controles
+    st.sidebar.header("Analysis Variable")
+    
+    # Lista priorizando as 14 variáveis que de fato existem no GeoDataFrame
+    variaveis_alvo = [var for var in CONFIG_VARIAVEIS.keys() if var != "default" and var in gdf_hex.columns]
+    
+    # Caso as colunas no GPKG tenham outro formato, cai nas numéricas gerais
+    if not variaveis_alvo:
+        variaveis_alvo = list(gdf_hex.select_dtypes(include=[np.number]).columns)
+    
+    if not variaveis_alvo:
+        st.error("No numeric column found in the GPKG file")
+        st.stop()
+    
+    coluna_alvo = st.sidebar.selectbox("Choose a continuous variable:", variaveis_alvo)
+    
+    # Resgate da configuração específica da variável
+    cfg = CONFIG_VARIAVEIS.get(coluna_alvo, CONFIG_VARIAVEIS["default"])
+    nome_cmap = cfg["cmap"]
+    unidade = cfg["unidade"]
+    label_legenda = cfg["label"]
+    
+    st.sidebar.markdown("---")
+    st.sidebar.header("Transportation Corridors")
+    
+    mostrar_biarticulado = st.sidebar.checkbox(":red[━━━] Structuring Axes", value=False)
+    mostrar_linha_verde = st.sidebar.checkbox(":green[━━━] Linha Verde", value=False)
+    mostrar_contorno = st.sidebar.checkbox(":orange[━━━] Ringroad", value=False)
+    mostrar_277 = st.sidebar.checkbox(":violet[━━━] Roadway BR-277", value=False)
+    mostrar_comend = st.sidebar.checkbox(":gray[━━━] Av das Torres (Comendador Franco)", value=False)
+    
+    st.sidebar.markdown("---")
+    st.sidebar.header("Administrative Divisions")
+    mostrar_bairros = st.sidebar.checkbox("Neighborhoods Boundaries", value=False)
+    
+    # 3. Processamento de Cores e Métricas
+    alpha_hex = int(255 * 0.65)
+    dados_coluna = gdf_hex[coluna_alvo]
+    
+    vmin = float(dados_coluna.min())
+    vmax = float(dados_coluna.max())
+    
+    # Normalização com proteção para min == max
+    norm = mcolors.Normalize(vmin=vmin, vmax=vmax if vmax > vmin else vmin + 1)
+    colormap = plt.colormaps[nome_cmap]
+    
+    def mapear_cor_linear(val):
+        if pd.isna(val):
+            return [180, 180, 180, alpha_hex]
+        r, g, b, _ = colormap(norm(val))
+        return [int(r * 255), int(g * 255), int(b * 255), alpha_hex]
+    
+    gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(mapear_cor_linear)
+    
+    # Formatação condicional para o tooltip
+    gdf_hex["valor_formatado"] = gdf_hex[coluna_alvo].apply(
+        lambda x: f"{x:.2f}" if pd.notnull(x) else "N/A"
+    )
+    
+    # 4. Ajuste da Câmera
+    bounds = gdf_limite.total_bounds
+    centro_lat = (bounds[1] + bounds[3]) / 2
+    centro_lon = (bounds[0] + bounds[2]) / 2
+    
+    view_state = pdk.ViewState(
+        latitude=centro_lat,
+        longitude=centro_lon,
+        zoom=10,
+        pitch=0
+    )
+    
+    # 5. Configuração das Camadas PyDeck
+    url_esri_gray = "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+    
+    camada_esri_base = pdk.Layer(
+        "TileLayer",
+        id="esri-gray-canvas",
+        data=url_esri_gray,
+        min_zoom=0,
+        max_zoom=16,
+        tile_size=256,
+        pickable=False
+    )
+    
+    camada_hex = pdk.Layer(
+        "GeoJsonLayer",
+        gdf_hex.__geo_interface__,
+        id="layer-hex",
+        stroked=True,
+        filled=True,
+        get_fill_color="properties.fill_color",
+        get_line_color=[180, 180, 180, 80],
+        line_width_min_pixels=0.5,
+        pickable=True,
+        auto_highlight=True,
+        highlight_color=[255, 255, 0, 200]
+    )
+    
+    camada_limite = pdk.Layer(
+        "GeoJsonLayer",
+        gdf_limite.__geo_interface__,
+        id="layer-limite",
+        stroked=True,
+        filled=False,
+        get_line_color=[30, 30, 30, 255],
+        line_width_min_pixels=1.2,
+        pickable=False
+    )
+    
+    camadas_mapa = [camada_esri_base, camada_hex, camada_limite]
+    
+    if mostrar_biarticulado:
+        camadas_mapa.append(pdk.Layer(
+            "GeoJsonLayer",
+            gdf_biarticulado.__geo_interface__,
+            id="layer-biarticulado",
+            stroked=True,
+            filled=False,
+            get_line_color=hex_to_rgba("#e82227", 255),
+            line_width_min_pixels=2.5,
+            pickable=False
+        ))
+    
+    if mostrar_linha_verde:
+        camadas_mapa.append(pdk.Layer(
+            "GeoJsonLayer",
+            gdf_linha_verde.__geo_interface__,
+            id="layer-linha-verde",
+            stroked=True,
+            filled=False,
+            get_line_color=hex_to_rgba("#009c05", 255),
+            line_width_min_pixels=2.5,
+            pickable=False
+        ))
+    
+    if mostrar_contorno:
+        camadas_mapa.append(pdk.Layer(
+            "GeoJsonLayer",
+            gdf_contorno.__geo_interface__,
+            id="layer-contorno",
+            stroked=True,
+            filled=False,
+            get_line_color=hex_to_rgba("#f07436", 255),
+            line_width_min_pixels=2.0,
+            pickable=False
+        ))
+        
+    if mostrar_277:
+        camadas_mapa.append(pdk.Layer(
+            "GeoJsonLayer",
+            gdf_277.__geo_interface__,
+            id="layer-277",
+            stroked=True,
+            filled=False,
+            get_line_color=hex_to_rgba("#7F00FF", 255),
+            line_width_min_pixels=2.0,
+            pickable=False
+        ))
+        
+    if mostrar_comend:
+        camadas_mapa.append(pdk.Layer(
+            "GeoJsonLayer",
+            gdf_comend.__geo_interface__,
+            id="layer-comend",
+            stroked=True,
+            filled=False,
+            get_line_color=hex_to_rgba("#7b7b7b", 255),
+            line_width_min_pixels=2.0,
+            pickable=False
+        ))
+    
+    if mostrar_bairros:
+        camadas_mapa.append(pdk.Layer(
+            "GeoJsonLayer",
+            gdf_bairros.__geo_interface__,
+            id="layer-bairros-linhas",
+            stroked=True,
+            filled=False,
+            get_line_color=[90, 90, 90, 180],
+            line_width_min_pixels=1.0,
+            pickable=False
+        ))
+    
+    # Tooltip dinâmico com a unidade correspondente
+    texto_unidade = f" {unidade}" if unidade else ""
+    tooltip = {
+        "html": f"<b>{label_legenda}:</b> {{valor_formatado}}{texto_unidade}",
+        "style": {
+            "backgroundColor": "rgba(20, 20, 20, 0.85)",
+            "color": "#ffffff",
+            "fontFamily": "sans-serif",
+            "fontSize": "11px",
+            "padding": "6px 10px",
+            "borderRadius": "4px"
+        }
+    }
+    
+    deck = pdk.Deck(
+        layers=camadas_mapa,
+        initial_view_state=view_state,
+        map_style=None,
+        tooltip=tooltip
+    )
+    
+    # 6. Layout Principal: 2 Colunas (60% Mapa, 40% Estatística)
+    col_mapa, col_graficos = st.columns([3, 2], gap="medium")
+    
+    # ======================== COLUNA DA ESQUERDA: MAPA + LEGENDA ========================
+    with col_mapa:
+        st.subheader("Spatial Distribution")
+        st.pydeck_chart(deck, use_container_width=True)
+    
+        # Geração dos stops CSS com base no colormap dinâmico
+        N_STOPS = 10
+        stops = []
+        for i in range(N_STOPS):
+            t = i / (N_STOPS - 1)
+            r, g, b, _ = colormap(t)
+            stops.append(f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)}) {t * 100:.1f}%")
+        css_gradient = f"linear-gradient(to right, {', '.join(stops)})"
+    
+        # Marcadores proporcionais lineares (5 pontos)
+        N_TICKS = 5
+        ticks = np.linspace(vmin, vmax, N_TICKS)
+        marcos_html = "".join([
+            f'<span style="font-size: 11px; color: #444; font-family: monospace;">{val:.1f}</span>'
+            for val in ticks
+        ])
+    
+        # Legenda HTML estilizada
+        unidade_legenda = f" ({unidade})" if unidade else ""
+        html_legenda = f"""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 8px 12px; background: rgba(245, 245, 245, 0.9); border-radius: 6px; border: 1px solid #dcdcdc; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">
+                <span>Scale{unidade_legenda}: {label_legenda}</span>
+                <span style="font-weight: normal; color: #666; font-size: 12px;">Min: {vmin:.1f} | Max: {vmax:.1f}</span>
+            </div>
+            <div style="width: 100%; height: 16px; background: {css_gradient}; border-radius: 4px; border: 1px solid #777; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);"></div>
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 5px;">
+                {marcos_html}
+            </div>
+        </div>
+        """
+    
+        components.html(html_legenda, height=85)
+    
+    # ======================== COLUNA DA DIREITA: ESTATÍSTICAS ========================
+    with col_graficos:
+        st.subheader(f"Distribution: {label_legenda}")
+        
+        serie_limpa = dados_coluna.dropna()
+       
+        st.markdown("""
+            <style>
+            [data-testid="stMetricValue"] {
+                font-size: 1.35rem !important;
+                line-height: 1.2 !important;
+            }
+            [data-testid="stMetricLabel"] {
+                font-size: 0.85rem !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # Linha 1: Medidas de tendência central e contagem
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Mean", f"{serie_limpa.mean():.2f}")
+        m2.metric("Median", f"{serie_limpa.median():.2f}")
+        m3.metric("Std Dev", f"{serie_limpa.std():.2f}")
+        
+        # Linha 2: Extremos e total
+        m4, m5, m6 = st.columns(3)
+        m4.metric("Minimum", f"{serie_limpa.min():.2f}")
+        m5.metric("Maximum", f"{serie_limpa.max():.2f}")
+        m6.metric("Total Count", f"{int(serie_limpa.count()):,}")
+        
+        # --- CAIXA DE TEXTO FIXA ---
+        with st.container(border=False):
+            st.markdown("About the Database")
+            st.markdown("""
+            - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side)
+            - **Scope:** Municipality of Curitiba / Urban Limits
+            - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
+            - **POI:** Includes eating, shopping and entertainment activities
+            - **Fonts:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
+            """)
