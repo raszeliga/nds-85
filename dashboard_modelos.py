@@ -134,7 +134,7 @@ def render_modelos():
     
     def calc_cor_faixas(val):
         if pd.isna(val):
-            return [180, 180, 180, alpha_hex]
+            return [180, 180, 180, 80]
         if val <= 10:
             return cores_hex_rgba[0] # 0 - 10
         elif val <= 20:
