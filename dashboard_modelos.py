@@ -387,11 +387,11 @@ def render_modelos():
         with st.container(border=False):
             st.markdown("About the Database and Machine Learning Models applied")
             st.markdown("""
-            - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side)
-            - **Scope:** Municipality of Curitiba / Urban Limits
-            - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
-            - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
-            - The speeds for the morning, afternoon, evening, and early morning periods refer to data collected in the field. 
+            - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side).
+            - **Scope:** Municipality of Curitiba / Urban Limits.
+            - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors.
+            - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data.
+            - Speeds for the morning, afternoon, evening, and early morning periods refer to field collected data. 
             - Machine Learning Models by Szeliga et al (2026): Publication available in xxxxxxxxxxxxxxxxx
             """)
         
