@@ -101,7 +101,7 @@ def render_modelos():
     )
     
     mostrar_contorno = st.sidebar.checkbox(
-        r"$\textcolor{#0047AB}{\text{━━━}}$ Ringroad", 
+        r"$\textcolor{#00B4D8}{\text{━━━}}$ Ringroad", 
         value=False
     )
     
@@ -243,7 +243,7 @@ def render_modelos():
             id="layer-contorno",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#0047AB", 255),  # Contorno Rodoviário
+            get_line_color=hex_to_rgba("#00B4D8", 255),  # Contorno Rodoviário
             line_width_min_pixels=2.0,
             pickable=False
         )
