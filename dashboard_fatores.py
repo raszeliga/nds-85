@@ -170,11 +170,30 @@ def render_fatores():
     st.sidebar.markdown("---")
     st.sidebar.header("Transportation Corridors")
     
-    mostrar_biarticulado = st.sidebar.checkbox(":red[━━━] Structuring Axes", value=False)
-    mostrar_linha_verde = st.sidebar.checkbox(":green[━━━] Linha Verde", value=False)
-    mostrar_contorno = st.sidebar.checkbox(":orange[━━━] Ringroad", value=False)
-    mostrar_277 = st.sidebar.checkbox(":violet[━━━] Roadway BR-277", value=False)
-    mostrar_comend = st.sidebar.checkbox(":gray[━━━] Av das Torres (Comendador Franco)", value=False)
+    mostrar_biarticulado = st.sidebar.checkbox(
+        r"$\textcolor{#D00000}{\text{━━━}}$ Structuring Axes", 
+        value=False
+    )
+    
+    mostrar_linha_verde = st.sidebar.checkbox(
+        r"$\textcolor{#009E60}{\text{━━━}}$ Linha Verde", 
+        value=False
+    )
+    
+    mostrar_contorno = st.sidebar.checkbox(
+        r"$\textcolor{#696969}{\text{━━━}}$ Ringroad", 
+        value=False
+    )
+    
+    mostrar_277 = st.sidebar.checkbox(
+        r"$\textcolor{#5E17EB}{\text{━━━}}$ Roadway BR-277", 
+        value=False
+    )
+    
+    mostrar_comend = st.sidebar.checkbox(
+        r"$\textcolor{#1C1C1E}{\text{━━━}}$ Av das Torres (Comendador Franco)", 
+        value=False
+    )
     
     st.sidebar.markdown("---")
     st.sidebar.header("Administrative Divisions")
