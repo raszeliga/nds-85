@@ -429,5 +429,5 @@ def render_fatores():
             - **Scope:** Municipality of Curitiba / Urban Limits
             - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
             - **POI:** Includes eating, shopping and entertainment activities
-            - **Fonts:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
+            - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
             """)
