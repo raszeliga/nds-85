@@ -391,10 +391,8 @@ def render_modelos():
             - **Scope:** Municipality of Curitiba / Urban Limits
             - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
             - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
-            - Machine Learning Models by Szeliga et al (2026): Publication available in xxxxxxxx
-            - Decision Tree Model
-            - Random Forest Model 
-            - XGBoost Model
+            - The speeds for the morning, afternoon, evening, and early morning periods refer to data collected in the field. 
+            - Machine Learning Models by Szeliga et al (2026): Publication available in xxxxxxxxxxxxxxxxx
             """)
         
     # ======================== COLUNA DA DIREITA: GRÁFICOS + MÉTRICAS ========================
