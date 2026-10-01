@@ -257,76 +257,69 @@ def render_fatores():
     camadas_mapa = [camada_esri_base, camada_hex, camada_limite]
     
     if mostrar_biarticulado:
-        camadas_mapa.append(pdk.Layer(
+        layer_biarticulado = pdk.Layer(
             "GeoJsonLayer",
             gdf_biarticulado.__geo_interface__,
             id="layer-biarticulado",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#e82227", 255),
+            get_line_color=hex_to_rgba("#D00000", 255),  # Eixos Biarticulado
             line_width_min_pixels=2.5,
             pickable=False
-        ))
+        )
+        camadas_mapa.append(layer_biarticulado)
     
     if mostrar_linha_verde:
-        camadas_mapa.append(pdk.Layer(
+        layer_linha_verde = pdk.Layer(
             "GeoJsonLayer",
             gdf_linha_verde.__geo_interface__,
             id="layer-linha-verde",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#009c05", 255),
+            get_line_color=hex_to_rgba("#009E60", 255),  # Linha Verde
             line_width_min_pixels=2.5,
             pickable=False
-        ))
+        )
+        camadas_mapa.append(layer_linha_verde)
     
     if mostrar_contorno:
-        camadas_mapa.append(pdk.Layer(
+        layer_contorno = pdk.Layer(
             "GeoJsonLayer",
             gdf_contorno.__geo_interface__,
             id="layer-contorno",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#f07436", 255),
+            get_line_color=hex_to_rgba("#696969", 255),  # Contorno Rodoviário
             line_width_min_pixels=2.0,
             pickable=False
-        ))
+        )
+        camadas_mapa.append(layer_contorno)
         
     if mostrar_277:
-        camadas_mapa.append(pdk.Layer(
+        layer_277 = pdk.Layer(
             "GeoJsonLayer",
             gdf_277.__geo_interface__,
             id="layer-277",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#7F00FF", 255),
+            get_line_color=hex_to_rgba("#5E17EB", 255),  # BR-277
             line_width_min_pixels=2.0,
             pickable=False
-        ))
+        )
+        camadas_mapa.append(layer_277)
         
     if mostrar_comend:
-        camadas_mapa.append(pdk.Layer(
+        layer_comend = pdk.Layer(
             "GeoJsonLayer",
             gdf_comend.__geo_interface__,
             id="layer-comend",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#7b7b7b", 255),
+            get_line_color=hex_to_rgba("#1C1C1E", 255),  # BR-277
             line_width_min_pixels=2.0,
             pickable=False
-        ))
-    
-    if mostrar_bairros:
-        camadas_mapa.append(pdk.Layer(
-            "GeoJsonLayer",
-            gdf_bairros.__geo_interface__,
-            id="layer-bairros-linhas",
-            stroked=True,
-            filled=False,
-            get_line_color=[90, 90, 90, 180],
-            line_width_min_pixels=1.0,
-            pickable=False
-        ))
+        )
+        camadas_mapa.append(layer_comend)
     
     # Tooltip dinâmico com a unidade correspondente
     texto_unidade = f" {unidade}" if unidade else ""
