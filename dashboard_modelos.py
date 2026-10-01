@@ -370,7 +370,7 @@ def render_modelos():
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 8px 12px; background: rgba(245, 245, 245, 0.9); border-radius: 6px; border: 1px solid #dcdcdc; box-sizing: border-box;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">
                 <span>Legend (km/h): {coluna_alvo}</span>
-                <span style="font-weight: normal; color: #666; font-size: 12px;">Classes: 0-10 | 10-20 | 20-40 | 40-50 | 50+</span>
+                <span style="font-weight: normal; color: #666; font-size: 12px;">Classes: 0-30 | 30-40 | 40-50 | 50-70 | 70+</span>
             </div>
             <div style="display: flex; width: 100%; border-radius: 4px; border: 1px solid #777; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);">
                 {celulas_cores}
