@@ -360,7 +360,7 @@ def render_modelos():
         ])
     
         # Rótulos dos intervalos: 0, 10, 20, 40, 50 e 50+
-        rotulos_classes = ["10", "20", "40", "50", "50+"]
+        rotulos_classes = ["30", "40", "50", "70", "70+"]
         marcos_html = "".join([
             f'<span style="font-size: 11px; color: #444; font-family: monospace;">{rot}</span>'
             for rot in rotulos_classes
