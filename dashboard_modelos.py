@@ -101,7 +101,7 @@ def render_modelos():
     )
     
     mostrar_contorno = st.sidebar.checkbox(
-        ":orange[━━━] Ringroad", 
+        ":pink[━━━] Ringroad", 
         value=False
     )
     
