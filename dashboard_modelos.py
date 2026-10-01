@@ -91,27 +91,27 @@ def render_modelos():
     
     # Funções/tags auxiliares para criar a linha indicadora da legenda
     mostrar_biarticulado = st.sidebar.checkbox(
-        ":red[━━━] Structuring Axes", 
+        r"$\textcolor{#D00000}{\text{━━━}}$ Structuring Axes", 
         value=False
     )
     
     mostrar_linha_verde = st.sidebar.checkbox(
-        ":green[━━━] Linha Verde", 
+        r"$\textcolor{#009E60}{\text{━━━}}$ Linha Verde", 
         value=False
     )
     
     mostrar_contorno = st.sidebar.checkbox(
-        ":gray[━━━] Ringroad", 
+        r"$\textcolor{#0047AB}{\text{━━━}}$ Ringroad", 
         value=False
     )
     
     mostrar_277 = st.sidebar.checkbox(
-        ":violet[━━━] Roadway BR-277", 
+        r"$\textcolor{#5E17EB}{\text{━━━}}$ Roadway BR-277", 
         value=False
     )
     
     mostrar_comend = st.sidebar.checkbox(
-        ":gray[━━━] Av das Torres (Comendador Franco)", 
+        r"$\textcolor{#1C1C1E}{\text{━━━}}$ Av das Torres (Comendador Franco)", 
         value=False
     )
     
@@ -217,7 +217,7 @@ def render_modelos():
             id="layer-biarticulado",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#e82227", 255),  # Eixos Biarticulado
+            get_line_color=hex_to_rgba("#D00000", 255),  # Eixos Biarticulado
             line_width_min_pixels=2.5,
             pickable=False
         )
@@ -230,7 +230,7 @@ def render_modelos():
             id="layer-linha-verde",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#009c05", 255),  # Linha Verde
+            get_line_color=hex_to_rgba("#009E60", 255),  # Linha Verde
             line_width_min_pixels=2.5,
             pickable=False
         )
@@ -243,7 +243,7 @@ def render_modelos():
             id="layer-contorno",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#696969", 255),  # Contorno Rodoviário
+            get_line_color=hex_to_rgba("#0047AB", 255),  # Contorno Rodoviário
             line_width_min_pixels=2.0,
             pickable=False
         )
@@ -256,7 +256,7 @@ def render_modelos():
             id="layer-277",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#7F00FF", 255),  # BR-277
+            get_line_color=hex_to_rgba("#5E17EB", 255),  # BR-277
             line_width_min_pixels=2.0,
             pickable=False
         )
@@ -269,7 +269,7 @@ def render_modelos():
             id="layer-comend",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#7b7b7b", 255),  # BR-277
+            get_line_color=hex_to_rgba("#1C1C1E", 255),  # BR-277
             line_width_min_pixels=2.0,
             pickable=False
         )
