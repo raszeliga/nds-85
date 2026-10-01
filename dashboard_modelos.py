@@ -34,7 +34,7 @@ def render_modelos():
         return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
     
     # 1. Carregamento dos Dados
-    @st.cache_data
+    #@st.cache_data
     def carregar_camada(caminho_gpkg):
         gdf = gpd.read_file(caminho_gpkg)
         # PyDeck e Leaflet exigem coordenadas geográficas WGS84 (EPSG:4326)
