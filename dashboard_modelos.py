@@ -392,6 +392,13 @@ def render_modelos():
             - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
             - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
             """)
+            st.markdown("About the Machine Learning Models Applied")
+            st.markdown("""
+            - Decision Tree Model
+            - Random Forest Model 
+            - XGBosst Model
+            - Machine Learning Models by Szeliga et al (2026):** Publication available in xxxxxxxx
+            """)
         
     # ======================== COLUNA DA DIREITA: GRÁFICOS + MÉTRICAS ========================
     with col_graficos:
