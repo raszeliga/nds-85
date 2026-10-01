@@ -34,7 +34,7 @@ def render_modelos():
         return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
     
     # 1. Carregamento dos Dados
-    @st.cache_data(ttl=600)
+    @st.cache_data
     def carregar_camada(caminho_gpkg):
         gdf = gpd.read_file(caminho_gpkg)
         # PyDeck e Leaflet exigem coordenadas geográficas WGS84 (EPSG:4326)
@@ -43,7 +43,7 @@ def render_modelos():
         return gdf
     
     # Caminhos dos arquivos
-    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dash_modelos.gpkg"
+    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dash_modelos_v3.gpkg"
     caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
     
     # bairos de Curitiba
