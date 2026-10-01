@@ -385,19 +385,16 @@ def render_modelos():
         
         # --- CAIXA DE TEXTO FIXA ---
         with st.container(border=False):
-            st.markdown("About the Database")
+            st.markdown("About the Database and Machine Learning Models applied")
             st.markdown("""
             - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side)
             - **Scope:** Municipality of Curitiba / Urban Limits
             - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
             - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
-            """)
-            st.markdown("About the Machine Learning Models Applied")
-            st.markdown("""
+            - Machine Learning Models by Szeliga et al (2026): Publication available in xxxxxxxx
             - Decision Tree Model
             - Random Forest Model 
-            - XGBosst Model
-            - Machine Learning Models by Szeliga et al (2026):** Publication available in xxxxxxxx
+            - XGBoost Model
             """)
         
     # ======================== COLUNA DA DIREITA: GRÁFICOS + MÉTRICAS ========================
