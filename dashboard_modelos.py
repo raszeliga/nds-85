@@ -390,7 +390,6 @@ def render_modelos():
             - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side)
             - **Scope:** Municipality of Curitiba / Urban Limits
             - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
-            - **POI:** Includes eating, shopping and entertainment activities
             - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
             """)
         
