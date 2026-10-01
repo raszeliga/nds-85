@@ -124,7 +124,7 @@ def render_modelos():
     dados_coluna = gdf_hex[coluna_alvo]
     
     # Limites das classes fixadas
-    cortes_velocidade = [0, 10, 20, 40, 50, np.inf]
+    cortes_velocidade = [0, 30, 40, 50, 70, np.inf]
     N_CLASSES = 5
     colormap = plt.colormaps["YlOrRd"]
     
@@ -135,16 +135,16 @@ def render_modelos():
     def calc_cor_faixas(val):
         if pd.isna(val):
             return [180, 180, 180, 80]
-        if val <= 10:
-            return cores_hex_rgba[0] # 0 - 10
-        elif val <= 20:
-            return cores_hex_rgba[1] # 10 - 20
+        if val <= 30:
+            return cores_hex_rgba[0] # 0 - 30
         elif val <= 40:
-            return cores_hex_rgba[2] # 20 - 40
+            return cores_hex_rgba[1] # 30 - 40
         elif val <= 50:
-            return cores_hex_rgba[3] # 40 - 50
+            return cores_hex_rgba[2] # 40 - 50
+        elif val <= 70:
+            return cores_hex_rgba[3] # 50 - 70
         else:
-            return cores_hex_rgba[4] # 50+
+            return cores_hex_rgba[4] # 70+
     
     gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(calc_cor_faixas)
     
