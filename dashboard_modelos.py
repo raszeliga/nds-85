@@ -101,7 +101,7 @@ def render_modelos():
     )
     
     mostrar_contorno = st.sidebar.checkbox(
-        ":GhostWhite[━━━] Ringroad", 
+        ":gray[━━━] Ringroad", 
         value=False
     )
     
