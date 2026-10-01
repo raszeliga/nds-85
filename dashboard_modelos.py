@@ -383,6 +383,17 @@ def render_modelos():
     
         components.html(html_legenda, height=85)
         
+        # --- CAIXA DE TEXTO FIXA ---
+        with st.container(border=False):
+            st.markdown("About the Database")
+            st.markdown("""
+            - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side)
+            - **Scope:** Municipality of Curitiba / Urban Limits
+            - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
+            - **POI:** Includes eating, shopping and entertainment activities
+            - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data
+            """)
+        
     # ======================== COLUNA DA DIREITA: GRÁFICOS + MÉTRICAS ========================
     with col_graficos:
         st.subheader(f"Distribution: {coluna_alvo}")
