@@ -353,7 +353,8 @@ def render_modelos():
             - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors.
             - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data.
             - Speeds for the morning, afternoon, evening, and early morning periods refer to field collected data.
-            - Machine Learning Models by xxxxxx.
+            - The construcution of this Dashboard is part of Authors (2027) - https://zenodo.org/records/21605239
+            - Machine Learning Models applied as seen in Authors (2027) - https://zenodo.org/records/21605239
             """)
     
     if __name__ == "__main__":
