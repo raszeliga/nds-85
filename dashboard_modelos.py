@@ -344,19 +344,19 @@ def render_modelos():
         st.subheader(f"Right: {coluna_dir}")
         renderizar_painel_coluna(coluna_dir, "right")
     
-    # Rodapé informativo
-        st.markdown("---")
-        with st.expander("About the Database and Machine Learning Models applied"):
-            st.markdown("""
-            - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side).
-            - **Scope:** Municipality of Curitiba / Urban Limits.
-            - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors.
-            - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data.
-            - Speeds for the morning, afternoon, evening, and early morning periods refer to field collected data.
-            - The construcution of this Dashboard is part of Authors (2027) - https://zenodo.org/records/21605239
-            - Machine Learning Models applied as seen in Authors (2027) - https://zenodo.org/records/21605239
-            """)
-    
-    if __name__ == "__main__":
-        render_modelos()
+# Rodapé informativo
+    st.markdown("---")
+    with st.expander("About the Database and Machine Learning Models applied"):
+        st.markdown("""
+        - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side).
+        - **Scope:** Municipality of Curitiba / Urban Limits.
+        - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors.
+        - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data.
+        - Speeds for the morning, afternoon, evening, and early morning periods refer to field collected data.
+        - The construcution of this Dashboard is part of Authors (2027) - https://zenodo.org/records/21605239
+        - Machine Learning Models applied as seen in Authors (2027) - https://zenodo.org/records/21605239
+        """)
+
+if __name__ == "__main__":
+    render_modelos()
     
