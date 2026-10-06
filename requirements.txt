@@ -1,7 +1,7 @@
-streamlit
+streamlit==1.51.0
 pandas
 geopandas
-pydeck
+pydeck==0.9.3
 matplotlib
 numpy
 plotly
