@@ -1,6 +1,6 @@
-streamlit
+streamlit==1.51.0
+pydeck==0.9.3
 pandas
-pydeck
 matplotlib
 numpy
 geopandas
