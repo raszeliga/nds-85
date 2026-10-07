@@ -1,7 +1,7 @@
 streamlit==1.51.0
+pandas==2.3.3
 pydeck==0.9.3
-pandas
-matplotlib
-numpy
-geopandas
-plotly
+matplotlib==3.10.6
+numpy==2.3.5
+geopandas==1.1.4
+plotly==6.3.0
