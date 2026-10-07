@@ -187,7 +187,7 @@ def render_modelos():
                 camadas.append(pdk.Layer("GeoJsonLayer", gdf_bairros.__geo_interface__, id=f"bairros-{sufixo_id}", stroked=True, filled=False, get_line_color=[90, 90, 90, 180], line_width_min_pixels=1.0))
     
             tooltip = {
-                "html": f"<b>{coluna_nome}:</b> {{properties.valor_formatado}} km/h",
+                "html": f"<b>{coluna_nome}:</b> {{valor_formatado}} km/h",
                 "style": {
                     "backgroundColor": "rgba(20, 20, 20, 0.85)",
                     "color": "#ffffff",
