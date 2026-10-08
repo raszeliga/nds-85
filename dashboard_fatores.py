@@ -28,8 +28,6 @@ from matplotlib.colors import BoundaryNorm
 # list(colormaps)
 
 def render_fatores():
-    st.set_page_config(layout="wide", page_title="Hexagonal Network - Viewer")
-    
     st.title("Contributing Factors Viewer")
     
     # 0. Dicionário de Configurações (14 Variáveis)
@@ -364,12 +362,25 @@ def render_fatores():
             id="layer-comend",
             stroked=True,
             filled=False,
-            get_line_color=hex_to_rgba("#1C1C1E", 255),  # BR-277
+            get_line_color=hex_to_rgba("#1C1C1E", 255),  # Av. das Torres
             line_width_min_pixels=2.0,
             pickable=False
         )
         camadas_mapa.append(layer_comend)
-    
+        
+    if mostrar_bairros:
+     layer_bairros = pdk.Layer(
+         "GeoJsonLayer",
+         gdf_bairros.__geo_interface__,
+         id="layer-bairros",
+         stroked=True,
+         filled=False,
+         get_line_color=[100, 100, 100, 160],
+         line_width_min_pixels=0.8,
+         pickable=False
+     )
+     camadas_mapa.append(layer_bairros)
+        
     # Tooltip dinâmico com a unidade correspondente
     texto_unidade = f" {unidade}" if unidade else ""
     tooltip = {
