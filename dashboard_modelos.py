@@ -24,9 +24,7 @@ from plotly.subplots import make_subplots
 import streamlit.components.v1 as components
 
 def render_modelos():
-    st.set_page_config(layout="wide", page_title="Hexagonal Network - Viewer")
-    
-    st.title("Speed Viewer- Comparison Mode")
+    st.title("NDS Speed Viewer - Comparison Mode")
     
     # Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
     def hex_to_rgba(hex_str, alpha=255):
@@ -135,7 +133,9 @@ def render_modelos():
     def gerar_deck_e_legenda(coluna_nome, sufixo_id):
             df_temp = gdf_hex.copy()
             df_temp["fill_color"] = df_temp[coluna_nome].apply(calc_cor_faixas)
-            df_temp["valor_formatado"] = df_temp[coluna_nome].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else "N/A")
+            df_temp["valor_formatado"] = df_temp[coluna_nome].apply(
+                lambda x: f"{x:.2f}" if pd.notnull(x) else "N/A"
+                )
     
             camadas = [
                 pdk.Layer(
@@ -360,4 +360,3 @@ def render_modelos():
 
 if __name__ == "__main__":
     render_modelos()
-    
