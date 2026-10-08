@@ -374,4 +374,5 @@ def render_fatais():
             - **Scope:** Municipality of Curitiba / Urban Limits
             - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors
             - **Data:** IPPUC / Municipal open data and OpenStreetMap Data
+            - For this Dashboard, data obtained from https://geoapp.ippuc.org.br/AcidentesDeTransito/dashboard.html
             """)
