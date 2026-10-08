@@ -22,7 +22,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 import streamlit.components.v1 as components
 import mapclassify
-from matplotlib.colors import BoundaryNorm
+from matplotlib.colors import BoundaryNorm, ListedColormap
 
 # from matplotlib import colormaps
 # list(colormaps)
@@ -204,12 +204,12 @@ def render_fatores():
     mostrar_bairros = st.sidebar.checkbox("Neighborhoods Boundaries", value=False)
     
     # 3. Processamento de Cores e Métricas
-    alpha_hex = int(255 * 0.85) # grau de transparência
-    dados_coluna = gdf_hex[coluna_alvo]
+    alpha_hex = int(255 * 0.65) # grau de transparência
+    dados_coluna = pd.to_numeric(gdf_hex[coluna_alvo], errors="coerce")
     
     # Isola valores estritamente positivos (maiores que 0)
     valores_pos = dados_coluna[dados_coluna > 0].dropna()
-    colormap = plt.colormaps[nome_cmap]
+    colormap_base = plt.colormaps[nome_cmap]
     
     N_CLASSES = 5
     
@@ -228,26 +228,31 @@ def render_fatores():
         if len(bins) < 2:
             bins = [float(valores_pos.min()), float(valores_pos.max()) + 1]
             
+        n_intervalos = len(bins) - 1
+        
+        # --- CORTE DO TOM CLARO ---
+        # Amostra de 0.25 (segundo tom/mais vivo) até 1.0 (tom mais escuro)
+        amostras = np.linspace(0.25, 1.0, n_intervalos)
+        cores_ajustadas = colormap_base(amostras)
+        colormap = ListedColormap(cores_ajustadas)
+        
         norm = BoundaryNorm(bins, ncolors=colormap.N, clip=True)
-        vmin_pos = float(valores_pos.min())
         vmax = float(valores_pos.max())
     else:
-        bins = [0, 1]
+        bins = [0.0, 1.0]
+        colormap = colormap_base
         norm = mcolors.Normalize(vmin=0, vmax=1)
-        vmin_pos = 0.0
         vmax = 0.0
 
     def mapear_cor_jenks(val):
-        # 0 ou nulo permanece 100% transparente
         if pd.isna(val) or val <= 0:
             return [0, 0, 0, 0]
-        
         r, g, b, _ = colormap(norm(val))
         return [int(r * 255), int(g * 255), int(b * 255), alpha_hex]
 
-    gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(mapear_cor_jenks)
+    gdf_hex["fill_color"] = dados_coluna.apply(mapear_cor_jenks)
     
-    gdf_hex["valor_formatado"] = gdf_hex[coluna_alvo].apply(
+    gdf_hex["valor_formatado"] = dados_coluna.apply(
         lambda x: f"{x:.2f}" if pd.notnull(x) else "N/A"
     )
 
@@ -418,12 +423,10 @@ def render_fatores():
             val_inf = bins[i]
             val_sup = bins[i+1]
             
-            # Cor do ponto médio da classe
-            val_mid = (val_inf + val_sup) / 2
-            r, g, b, _ = colormap(norm(val_mid))
+            # Pega exatamente a cor da i-ésima classe criada
+            r, g, b, _ = colormap(i)
             cor_rgb = f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})"
             
-            # Formatação de inteiros ou decimais
             if val_sup.is_integer() and val_inf.is_integer():
                 label_classe = f"{int(val_inf)} – {int(val_sup)}"
             else:
