@@ -28,7 +28,7 @@ from matplotlib.colors import BoundaryNorm, ListedColormap
 # list(colormaps)
 
 def render_fatores():
-    st.title("Contributing Factors Viewer")
+    st.title("Speed Contributing Factors Viewer")
     
     # 0. Dicionário de Configurações (14 Variáveis)
     CONFIG_VARIAVEIS = {
