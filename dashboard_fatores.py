@@ -11,6 +11,7 @@ Created on Tue Sep 22 10:35:53 2026
 #### streamlit run teste-02.py
 
 # pip install pydeck
+# pip install mapclassify
 
 import streamlit as st
 import pandas as pd
@@ -20,6 +21,9 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 import streamlit.components.v1 as components
+import mapclassify
+from matplotlib.colors import BoundaryNorm
+
 # from matplotlib import colormaps
 # list(colormaps)
 
@@ -56,7 +60,7 @@ def render_fatores():
             "unidade": "Units"
         },
         "Traffic Lights": {
-            "cmap": "Purples",
+            "cmap": "Reds",
             "label": "Traffic Lights",
             "unidade": "Units"
         },
@@ -202,39 +206,53 @@ def render_fatores():
     mostrar_bairros = st.sidebar.checkbox("Neighborhoods Boundaries", value=False)
     
     # 3. Processamento de Cores e Métricas
-    alpha_hex = int(255 * 0.65)
+    alpha_hex = int(255 * 0.85) # grau de transparência
     dados_coluna = gdf_hex[coluna_alvo]
     
-    # Valores estritamente positivos para balizar a rampa de cores
-    valores_positivos = dados_coluna[dados_coluna > 0]
-    
-    if not valores_positivos.empty:
-        vmin_pos = float(valores_positivos.min())
-        vmax = float(valores_positivos.max())
-    else:
-        vmin_pos = 1.0
-        vmax = 1.0
-
-    # Normalização apenas do intervalo positivo
-    norm = mcolors.Normalize(vmin=vmin_pos, vmax=vmax if vmax > vmin_pos else vmin_pos + 1)
+    # Isola valores estritamente positivos (maiores que 0)
+    valores_pos = dados_coluna[dados_coluna > 0].dropna()
     colormap = plt.colormaps[nome_cmap]
     
-    def mapear_cor_linear(val):
-        # 1. Se for nulo ou zero, fica totalmente transparente (sem cor)
+    N_CLASSES = 5
+    
+    if not valores_pos.empty:
+        # Ajusta k caso a coluna tenha menos de 5 valores únicos distintos
+        k_ajustado = min(N_CLASSES, valores_pos.nunique())
+        
+        # Algoritmo de Jenks
+        jenks = mapclassify.NaturalBreaks(valores_pos, k=k_ajustado)
+        
+        # Cria os limites de corte (bins) incluindo o valor mínimo
+        bins = [float(valores_pos.min())] + [float(b) for b in jenks.bins]
+        
+        # Remove duplicatas e ordena para evitar erro no BoundaryNorm
+        bins = sorted(list(set(bins)))
+        if len(bins) < 2:
+            bins = [float(valores_pos.min()), float(valores_pos.max()) + 1]
+            
+        norm = BoundaryNorm(bins, ncolors=colormap.N, clip=True)
+        vmin_pos = float(valores_pos.min())
+        vmax = float(valores_pos.max())
+    else:
+        bins = [0, 1]
+        norm = mcolors.Normalize(vmin=0, vmax=1)
+        vmin_pos = 0.0
+        vmax = 0.0
+
+    def mapear_cor_jenks(val):
+        # 0 ou nulo permanece 100% transparente
         if pd.isna(val) or val <= 0:
             return [0, 0, 0, 0]
         
-        # 2. Se for maior que zero, interpola a cor e aplica o alfa padrão
         r, g, b, _ = colormap(norm(val))
         return [int(r * 255), int(g * 255), int(b * 255), alpha_hex]
+
+    gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(mapear_cor_jenks)
     
-    gdf_hex["fill_color"] = gdf_hex[coluna_alvo].apply(mapear_cor_linear)
-    
-    # Formatação condicional para o tooltip
     gdf_hex["valor_formatado"] = gdf_hex[coluna_alvo].apply(
         lambda x: f"{x:.2f}" if pd.notnull(x) else "N/A"
     )
-    
+
     # 4. Ajuste da Câmera
     bounds = gdf_limite.total_bounds
     centro_lat = (bounds[1] + bounds[3]) / 2
@@ -381,38 +399,49 @@ def render_fatores():
         st.subheader("Spatial Distribution")
         st.pydeck_chart(deck, use_container_width=True)
     
-        # Geração dos stops CSS com base no colormap dinâmico
-        N_STOPS = 10
-        stops = []
-        for i in range(N_STOPS):
-            t = i / (N_STOPS - 1)
-            r, g, b, _ = colormap(t)
-            stops.append(f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)}) {t * 100:.1f}%")
-        css_gradient = f"linear-gradient(to right, {', '.join(stops)})"
-    
-        # Marcadores proporcionais lineares (5 pontos)
-        N_TICKS = 5
-        ticks = np.linspace(vmin_pos, vmax, N_TICKS)
-        marcos_html = "".join([
-            f'<span style="font-size: 11px; color: #444; font-family: monospace;">{val:.1f}</span>'
-            for val in ticks
-        ])
-    
-        # Legenda HTML estilizada
+        # Geração dos blocos de legenda para as classes de Jenks
+        blocos_html = []
+        num_intervalos = len(bins) - 1
+        
+        for i in range(num_intervalos):
+            val_inf = bins[i]
+            val_sup = bins[i+1]
+            
+            # Cor do ponto médio da classe
+            val_mid = (val_inf + val_sup) / 2
+            r, g, b, _ = colormap(norm(val_mid))
+            cor_rgb = f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})"
+            
+            # Formatação de inteiros ou decimais
+            if val_sup.is_integer() and val_inf.is_integer():
+                label_classe = f"{int(val_inf)} – {int(val_sup)}"
+            else:
+                label_classe = f"{val_inf:.1f} – {val_sup:.1f}"
+            
+            bloco = f"""
+            <div style="flex: 1; text-align: center; margin: 0 2px;">
+                <div style="background: {cor_rgb}; height: 16px; border-radius: 3px; border: 1px solid #666; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);"></div>
+                <span style="font-size: 10px; color: #333; font-family: -apple-system, sans-serif; display: block; margin-top: 4px; font-weight: 500;">{label_classe}</span>
+            </div>
+            """
+            blocos_html.append(bloco)
+            
+        legenda_blocos = "".join(blocos_html)
         unidade_legenda = f" ({unidade})" if unidade else ""
+        
         html_legenda = f"""
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 8px 12px; background: rgba(245, 245, 245, 0.9); border-radius: 6px; border: 1px solid #dcdcdc; box-sizing: border-box;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #333;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 10px 12px; background: rgba(248, 248, 248, 0.95); border-radius: 6px; border: 1px solid #dcdcdc; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #222;">
                 <span>Scale{unidade_legenda}: {label_legenda}</span>
-                <span style="font-weight: normal; color: #666; font-size: 12px;">Min (>0): {vmin_pos:.1f} | Max: {vmax:.1f}</span>            </div>
-            <div style="width: 100%; height: 16px; background: {css_gradient}; border-radius: 4px; border: 1px solid #777; box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);"></div>
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 5px;">
-                {marcos_html}
+                <span style="font-weight: normal; color: #666; font-size: 11px;">Jenks (5 Classes) | Max: {vmax:.1f}</span>
+            </div>
+            <div style="display: flex; width: 100%;">
+                {legenda_blocos}
             </div>
         </div>
         """
-    
-        components.html(html_legenda, height=85)
+        
+        components.html(html_legenda, height=90)
     
     # ======================== COLUNA DA DIREITA: ESTATÍSTICAS ========================
     with col_graficos:
