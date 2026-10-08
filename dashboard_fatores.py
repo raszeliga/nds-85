@@ -20,6 +20,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 import streamlit.components.v1 as components
+# from matplotlib import colormaps
+# list(colormaps)
 
 def render_fatores():
     st.set_page_config(layout="wide", page_title="Hexagonal Network - Viewer")
@@ -54,7 +56,7 @@ def render_fatores():
             "unidade": "Units"
         },
         "Traffic Lights": {
-            "cmap": "hot_r",
+            "cmap": "Purples",
             "label": "Traffic Lights",
             "unidade": "Units"
         },
