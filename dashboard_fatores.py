@@ -11,7 +11,7 @@ Created on Tue Sep 22 10:35:53 2026
 #### streamlit run teste-02.py
 
 # pip install pydeck
-# pip install mapclassify
+pip install mapclassify
 
 import streamlit as st
 import pandas as pd
