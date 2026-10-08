@@ -20,7 +20,7 @@ import streamlit.components.v1 as components
 def render_fatais():
     # Nota: se esta função for chamada dentro de um menu com várias páginas,
     # st.set_page_config() deve ser executado apenas na primeira linha do seu arquivo principal (app.py).
-    st.title("Fatal Accidents Viewer")
+    st.title("Fatal Accidents Viewer from 2019 to 2023")
     
     # 0. Configuração da Variável Única
     COLUNA_ALVO = "Fatal Accidents"  # <-- Nome exato da coluna numérica no GPKG
