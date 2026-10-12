@@ -31,5 +31,5 @@ if menu_modulo == "Contributing Factors":
   render_fatores()
 elif menu_modulo == "Predictive Models":
   render_modelos()
-elif menu_modulo == "Fatal Accidents":
-  render_fatais() 
+# elif menu_modulo == "Fatal Accidents":
+  # render_fatais() 
