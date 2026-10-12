@@ -28,7 +28,7 @@ from matplotlib.colors import BoundaryNorm, ListedColormap
 # list(colormaps)
 
 def render_fatores():
-    st.title("Speed Contributing Factors Viewer")
+    st.title("Contributing Factors Viewer")
     
     # 0. Dicionário de Configurações (14 Variáveis)
     CONFIG_VARIAVEIS = {
@@ -172,6 +172,16 @@ def render_fatores():
     label_legenda = cfg["label"]
     
     st.sidebar.markdown("---")
+    st.sidebar.header("Layer Styling")
+    opacidade_pct = st.sidebar.slider(
+    "Hexagon Opacity (%)", 
+    min_value=0, 
+    max_value=100, 
+    value=65,  # mantém o padrão original de 65%
+    step=5
+    )
+    
+    st.sidebar.markdown("---")
     st.sidebar.header("Transportation Corridors")
     
     mostrar_biarticulado = st.sidebar.checkbox(
@@ -204,7 +214,7 @@ def render_fatores():
     mostrar_bairros = st.sidebar.checkbox("Neighborhoods Boundaries", value=False)
     
     # 3. Processamento de Cores e Métricas
-    alpha_hex = int(255 * 0.65) # grau de transparência
+    alpha_hex = int(255 * (opacidade_pct / 100.0)) # grau de transparência
     dados_coluna = pd.to_numeric(gdf_hex[coluna_alvo], errors="coerce")
     
     # Isola valores estritamente positivos (maiores que 0)
