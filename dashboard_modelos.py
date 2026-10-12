@@ -79,6 +79,16 @@ def render_modelos():
     coluna_esq = st.sidebar.selectbox("Left Map Variable:", colunas_numericas, index=0)
     idx_padrao_dir = 1 if len(colunas_numericas) > 1 else 0
     coluna_dir = st.sidebar.selectbox("Right Map Variable:", colunas_numericas, index=idx_padrao_dir)
+    
+    st.sidebar.markdown("---")
+    st.sidebar.header("Layer Styling")
+    opacidade_pct = st.sidebar.slider(
+    "Hexagon Opacity (%)", 
+    min_value=0, 
+    max_value=100, 
+    value=65,  # mantém o padrão original de 65%
+    step=5
+    )
 
     st.sidebar.markdown("---")
     st.sidebar.header("Transportation Corridors")
@@ -93,7 +103,7 @@ def render_modelos():
     mostrar_bairros = st.sidebar.checkbox("Neighborhoods Boundaries", value=False)
     
     # 3. Configurações Compartilhadas de Cores e Câmera
-    alpha_hex = int(255 * 0.65)
+    alpha_hex = int(255 * (opacidade_pct / 100.0)) # grau de transparência
     N_CLASSES = 5
     colormap = plt.colormaps["YlOrRd"]
     cores_rgba = [colormap((i + 0.5) / N_CLASSES) for i in range(N_CLASSES)]
