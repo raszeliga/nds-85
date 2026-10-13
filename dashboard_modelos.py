@@ -211,16 +211,60 @@ def render_modelos():
             
             deck = pdk.Deck(layers=camadas, initial_view_state=view_state, map_style=None, tooltip=tooltip)
 
+            # Definição dos intervalos/faixas de acordo com a função calc_cor_faixas
+            faixas_intervalos = [
+                "≤ 30",
+                "30 – 40",
+                "40 – 50",
+                "50 – 70",
+                "> 70"
+            ]
+
             cores_rgb_str = [f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})" for r, g, b, _ in cores_rgba]
-            largura_pct = 100.0 / N_CLASSES
-            celulas_cores = "".join([f'<div style="width: {largura_pct}%; background-color: {c}; height: 14px; border-right: 1px solid rgba(0,0,0,0.2);"></div>' for c in cores_rgb_str])
-            marcos_html = "".join([f'<span style="font-size: 10px; color: #444; font-family: monospace;">{r}</span>' for r in ["30", "40", "50", "70", "70+"]])
-    
+
+            # Constrói cada bloco individual (retângulo colorido + rótulo min - max embaixo)
+            itens_legenda = []
+            for cor, intervalo in zip(cores_rgb_str, faixas_intervalos):
+                item = f"""
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                    <div style="
+                        width: 100%; 
+                        height: 18px; 
+                        background-color: {cor}; 
+                        border-radius: 4px; 
+                        border: 1px solid rgba(0, 0, 0, 0.45);
+                        box-sizing: border-box;
+                    "></div>
+                    <span style="font-size: 11px; color: #222; font-family: sans-serif; white-space: nowrap;">
+                        {intervalo}
+                    </span>
+                </div>
+                """
+                itens_legenda.append(item)
+
+            blocos_html = "".join(itens_legenda)
+
+            # Container idêntico ao modelo: cabeçalho com título à esquerda e subtítulo à direita
             legenda_html = f"""
-            <div style="font-family: sans-serif; padding: 6px 10px; background: rgba(245, 245, 245, 0.9); border-radius: 4px; border: 1px solid #dcdcdc;">
-                <div style="font-size: 11px; font-weight: 600; color: #333; margin-bottom: 4px;">{coluna_nome} (km/h)</div>
-                <div style="display: flex; width: 100%; border-radius: 3px; border: 1px solid #777; overflow: hidden;">{celulas_cores}</div>
-                <div style="display: flex; justify-content: space-between; width: 100%; margin-top: 3px;">{marcos_html}</div>
+            <div style="
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                padding: 10px 14px;
+                background: #fbfbfb;
+                border-radius: 8px;
+                border: 1px solid #d0d0d0;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 12px; font-weight: 700; color: #1c1c1e;">
+                        Scale (km/h): {coluna_nome}
+                    </span>
+                    <span style="font-size: 11px; color: #666;">
+                        Fixed (5 Classes)
+                    </span>
+                </div>
+                <div style="display: flex; gap: 8px; width: 100%;">
+                    {blocos_html}
+                </div>
             </div>
             """
             return deck, legenda_html
@@ -308,7 +352,7 @@ def render_modelos():
         # 1. Mapa + Legenda
         deck, leg = gerar_deck_e_legenda(coluna_nome, sufixo_id)
         st.pydeck_chart(deck, use_container_width=True)
-        components.html(leg, height=75)
+        components.html(leg, height=90)
 
         st.markdown("---")
 
