@@ -113,16 +113,16 @@ def render_modelos():
     def calc_cor_faixas(val):
         if pd.isna(val):
             return [180, 180, 180, 80]
-        if val <= 30:
-            return cores_hex_rgba[0] # 0 - 30
+        if val <= 20:
+            return cores_hex_rgba[0] # 0 - 20
+        elif val <= 30:
+            return cores_hex_rgba[1] # 20 - 30
         elif val <= 40:
-            return cores_hex_rgba[1] # 30 - 40
+            return cores_hex_rgba[2] # 30 - 40
         elif val <= 50:
-            return cores_hex_rgba[2] # 40 - 50
-        elif val <= 70:
-            return cores_hex_rgba[3] # 50 - 70
+            return cores_hex_rgba[3] # 40 - 50
         else:
-            return cores_hex_rgba[4] # 70+
+            return cores_hex_rgba[4] # 50+
     
     # Ajuste da Câmera (baseado na extensão do limite municipal)
     bounds = gdf_limite.total_bounds
@@ -214,11 +214,11 @@ def render_modelos():
 
             # Definição dos intervalos/faixas de acordo com a função calc_cor_faixas
             faixas_intervalos = [
-                "≤ 30",
-                "30 – 40",
+                "≤ 20",
+                "20 – 30",
+                "20 – 40",
                 "40 – 50",
-                "50 – 70",
-                "> 70"
+                "> 50"
             ]
 
             cores_rgb_str = [f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})" for r, g, b, _ in cores_rgba]
