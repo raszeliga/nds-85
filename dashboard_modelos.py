@@ -41,7 +41,7 @@ def render_modelos():
         return gdf
     
     # Caminhos dos arquivos
-    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dash_modelos_v3.gpkg"
+    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dash_modelos.gpkg"
     caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
     
     # bairos de Curitiba
