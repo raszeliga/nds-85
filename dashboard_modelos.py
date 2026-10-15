@@ -216,7 +216,7 @@ def render_modelos():
             faixas_intervalos = [
                 "≤ 20",
                 "20 – 30",
-                "20 – 40",
+                "30 – 40",
                 "40 – 50",
                 "> 50"
             ]
