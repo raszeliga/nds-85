@@ -25,6 +25,7 @@ import streamlit.components.v1 as components
 
 def render_modelos():
     st.title("NDS Speed Viewer - Comparison Mode")
+    st.subheader("See descriptive statistics below the maps")
     
     # Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
     def hex_to_rgba(hex_str, alpha=255):
