@@ -23,7 +23,7 @@ st.set_page_config(layout="wide", page_title="Urban Spatial Analysis")
 # Seletor no topo da sidebar
 menu_modulo = st.sidebar.selectbox(
     "Select the Analysis Module:",
-    ["Contributing Factors", "Observed Speeds", "Predictive Models", "Fatal Accidents"],
+    ["Contributing Factors", "Observed Speeds", "Predictive Models"],
 )
 
 st.sidebar.markdown("---")
