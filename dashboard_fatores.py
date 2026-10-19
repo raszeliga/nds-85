@@ -29,51 +29,51 @@ from matplotlib.colors import BoundaryNorm, ListedColormap
 
 def render_fatores():
     st.title("Contributing Factors Viewer")
-    
+        
     # 0. Dicionário de Configurações (14 Variáveis)
     CONFIG_VARIAVEIS = {
         "Population": {
-            "cmap": "YlGnBu",
+            "cmap": "Blues",
             "label": "Population",
             "unidade": "Inhabitants"
         },
         "Households": {
-            "cmap": "Blues",
+            "cmap": "Greens",
             "label": "Households",
             "unidade": "Households"
         },
         "Stop Signs": {
-            "cmap": "OrRd",
+            "cmap": "Reds",
             "label": "Stop Signs",
             "unidade": "Units"
         },
         "Crosswalk": {
-            "cmap": "YlOrBr",
+            "cmap": "Oranges",
             "label": "Crosswalks",
             "unidade": "Units"
         },
         "Roadbumps": {
-            "cmap": "YlOrRd",
+            "cmap": "Purples",
             "label": "Roadbumps",
             "unidade": "Units"
         },
         "Traffic Lights": {
-            "cmap": "Reds",
+            "cmap": "YlOrRd",
             "label": "Traffic Lights",
             "unidade": "Units"
         },
         "Speed Cameras": {
-            "cmap": "Reds",
+            "cmap": "GnBu",
             "label": "Speed Cameras",
             "unidade": "Units"
         },
         "Bus Stops": {
-            "cmap": "Purples",
+            "cmap": "BuPu",
             "label": "Bus Stops",
             "unidade": "Units"
         },
         "Intersections": {
-            "cmap": "Oranges",
+            "cmap": "PuRd",
             "label": "Intersections",
             "unidade": "Units"
         },
@@ -83,22 +83,22 @@ def render_fatores():
             "unidade": "Class"
         },
         "Posted Speed": {
-            "cmap": "Reds",
+            "cmap": "YlOrRd",
             "label": "Posted Speed",
             "unidade": "km/h"
         },
         "Bike Lanes": {
-            "cmap": "Greens",
-            "label": "Bike Lanes Length",
+            "cmap": "BuGn",
+            "label": "Total Bike Lanes Length per Hexagon",
             "unidade": "m"
         },
         "Schools and Universities": {
-            "cmap": "PuRd",
+            "cmap": "GnBu",
             "label": "Schools & Universities",
             "unidade": "Units"
         },
         "POI": {
-            "cmap": "Greys",
+            "cmap": "YlOrBr",
             "label": "Points of Interest (POI)",
             "unidade": "Units"
         },
