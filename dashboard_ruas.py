@@ -36,7 +36,7 @@ def render_ruas_rf():
     # ==============================================================================
     VARIAVEL_COLUNA = "V85 RF"      # Nome exato da coluna no GPKG
     VARIAVEL_LABEL = "Speed"       # Rótulo de exibição
-    VARIAVEL_UNIDADE = "(km/h)"    # Unidade de medida
+    VARIAVEL_UNIDADE = "km/h"    # Unidade de medida
     VARIAVEL_CMAP = "YlOrRd"            # Paleta Matplotlib
     
     # Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
