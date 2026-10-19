@@ -28,7 +28,7 @@ from matplotlib.colors import BoundaryNorm, ListedColormap
 # list(colormaps)
 
 def render_ruas_rf():
-    st.title("Random Forest Model Street Viewer")
+    st.title("Random Forest Model Viewer (Street)")
         
     # 0. Dicionário de Configurações
     # ==============================================================================
