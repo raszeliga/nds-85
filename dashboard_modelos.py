@@ -24,7 +24,7 @@ from plotly.subplots import make_subplots
 import streamlit.components.v1 as components
 
 def render_modelos():
-    st.title("NDS Speed Viewer - Comparison Mode")
+    st.title("NDS Predictive Models Viewer - Comparison Mode")
     st.subheader("See descriptive statistics below the maps")
     
     # Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
@@ -49,7 +49,7 @@ def render_modelos():
     caminho_bairros = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/divisa_bairros_2.gpkg"
     
     # Caminhos dos corredores de transporte
-    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/rota_bi-articulados_dissolv.gpkg"
+    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/rota_bi-articulados_dissolv_v2.gpkg"
     caminho_linha_verde = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Linha_Verde_Dissolv_2.gpkg"
     caminho_contorno = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Contorno_dissolv.gpkg"
     caminho_br277 = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/BR-277.gpkg"
