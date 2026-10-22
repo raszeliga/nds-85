@@ -15,6 +15,7 @@ Created on Wed Sep 30 16:11:38 2026
 from dashboard_fatores import render_fatores
 from dashboard_observed import render_observed
 from dashboard_observed_sincronizados import render_observed_sincronizados
+from dashboard_observed_hours import render_observed_hours
 from dashboard_modelos import render_modelos
 from dashboard_modelos_sincronizados import render_modelos_sincronizados
 from dashboard_ruas import render_ruas_rf
@@ -28,6 +29,7 @@ menu_modulo = st.sidebar.selectbox(
     ["Contributing Factors (Hexagons)",
      "Observed Speeds (Hexagons)",
      "Alt. Observed Speeds (Hexagons)",
+     "Observed Speeds - Hours (Hexagons)",
      "Predictive Models (Hexagons)",
      "Alt. Predictive Models (Hexagons)",
      "Predictive Model: Random Forest (Street)"],
@@ -41,6 +43,8 @@ elif menu_modulo == "Observed Speeds (Hexagons)":
   render_observed()
 elif menu_modulo == "Alt. Observed Speeds (Hexagons)":
   render_observed_sincronizados()
+elif menu_modulo == "Observed Speeds - Hours (Hexagons)":
+  render_observed_hours()
 elif menu_modulo == "Predictive Models (Hexagons)":
   render_modelos()
 elif menu_modulo == "Alt. Predictive Models (Hexagons)":
