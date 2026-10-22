@@ -376,7 +376,7 @@ def render_observed_sincronizados():
         m4, m5, m6 = st.columns(3)
         m4.metric("Minimum", f"{limpos.min():.2f}")
         m5.metric("Maximum", f"{limpos.max():.2f}")
-        m6.metric("Null", f"{dados.isna().sum()}")
+        m6.metric("Count", f"{dados.notna().sum()}")
 
     col_esq, col_dir = st.columns(2, gap="large")
     with col_esq:
