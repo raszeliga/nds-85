@@ -193,7 +193,7 @@ def render_observed_sincronizados():
                 return coresHex[4];
             }}
 
-            const tileUrl = 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+            const tileUrl = 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{{z}}/{{y}}/{{x}}';
             const tileAttribution = 'Tiles &copy; Esri, DeLorme, NAVTEQ';
 
             // 1. Inicializar os dois mapas
