@@ -194,7 +194,7 @@ def render_observed_sincronizados():
             }}
 
             const tileUrl = 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{{z}}/{{y}}/{{x}}';
-            const tileAttribution = 'Tiles &copy; Esri';
+            const tileAttribution = 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ';
 
             // 1. Inicializar os dois mapas
             const mapL = L.map('map-left', {{ zoomControl: true, zoomSnap: 0.25 }}).setView([{centro_lat}, {centro_lon}], 11);
