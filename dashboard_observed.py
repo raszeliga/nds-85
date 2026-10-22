@@ -374,8 +374,8 @@ def render_observed():
         m4, m5, m6 = st.columns(3)
         m4.metric("Minimum", f"{serie_limpa.min():.2f}")
         m5.metric("Maximum", f"{serie_limpa.max():.2f}")
-        m6.metric("Null", f"{dados_coluna.isna().sum()}")
-        
+        m6.metric("Count", f"{dados_coluna.notna().sum()}")
+            
         # 5. Estilização dos cartões de métricas
         st.markdown("""
             <style>
