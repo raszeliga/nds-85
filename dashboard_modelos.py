@@ -33,7 +33,7 @@ def render_modelos():
         return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
     
     # 1. Carregamento dos Dados
-    @st.cache_data(ttl=600)
+    @st.cache_data
     def carregar_camada(caminho_gpkg):
         gdf = gpd.read_file(caminho_gpkg)
         # PyDeck e Leaflet exigem coordenadas geográficas WGS84 (EPSG:4326)
@@ -49,7 +49,7 @@ def render_modelos():
     caminho_bairros = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/divisa_bairros_2.gpkg"
     
     # Caminhos dos corredores de transporte
-    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/rota_bi-articulados_dissolv_v2.gpkg"
+    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/eixos_biarticulados_dissolv_v3.gpkg"
     caminho_linha_verde = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Linha_Verde_Dissolv_2.gpkg"
     caminho_contorno = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Contorno_dissolv.gpkg"
     caminho_br277 = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/BR-277.gpkg"

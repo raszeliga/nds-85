@@ -49,7 +49,7 @@ def render_observed():
     caminho_bairros = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/divisa_bairros_2.gpkg"
     
     # Caminhos dos corredores de transporte
-    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/rota_bi-articulados_dissolv_v2.gpkg"
+    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/eixos_biarticulados_dissolv_v3.gpkg"
     caminho_linha_verde = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Linha_Verde_Dissolv_2.gpkg"
     caminho_contorno = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Contorno_dissolv.gpkg"
     caminho_br277 = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/BR-277.gpkg"
@@ -375,7 +375,7 @@ def render_observed():
         m4.metric("Minimum", f"{serie_limpa.min():.2f}")
         m5.metric("Maximum", f"{serie_limpa.max():.2f}")
         m6.metric("Count", f"{dados_coluna.notna().sum()}")
-            
+                
         # 5. Estilização dos cartões de métricas
         st.markdown("""
             <style>
