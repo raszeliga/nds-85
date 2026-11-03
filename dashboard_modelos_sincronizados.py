@@ -38,7 +38,7 @@ def render_modelos_sincronizados():
     caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dash_modelos.gpkg"
     caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
     caminho_bairros = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/divisa_bairros_2.gpkg"
-    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/eixos_biarticulados_dissolv_v3.gpkg"
+    caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/eixos_biarticulados_dissolv_v3a.gpkg"
     caminho_linha_verde = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Linha_Verde_Dissolv_2.gpkg"
     caminho_contorno = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Contorno_dissolv.gpkg"
     caminho_br277 = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/BR-277.gpkg"
