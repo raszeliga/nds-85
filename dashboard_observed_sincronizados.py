@@ -29,7 +29,7 @@ def render_observed_sincronizados():
     st.subheader("See descriptive statistics below the maps")
 
     # 1. Carregamento dos Dados
-    @st.cache_data
+    @st.cache_data(ttl=600)
     def carregar_camada(caminho_gpkg):
         gdf = gpd.read_file(caminho_gpkg)
         if gdf.crs is None or gdf.crs.to_epsg() != 4326:
