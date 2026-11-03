@@ -38,7 +38,6 @@ def carregar_camada(caminho_gpkg):
     return gdf
 
 def render_observed_hours():
-    st.set_page_config(layout="wide")
     st.title("NDS Speed Viewer")
     st.subheader("Interactive Hourly Speed Analysis")
 
