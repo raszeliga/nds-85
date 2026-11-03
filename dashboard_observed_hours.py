@@ -57,7 +57,7 @@ def render_observed_hours():
     st.subheader("Interactive Hourly Speed Analysis")
 
     # Caminhos dos arquivos
-    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/grade_h9_nds_horarios.gpkg"
+    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/grade_h9_nds_horarios_v2.gpkg"
     caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
     
     # bairos de Curitiba
