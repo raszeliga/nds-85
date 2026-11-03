@@ -115,7 +115,7 @@ def render_fatores():
         return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
     
     # 1. Carregamento dos Dados
-    @st.cache_data
+    @st.cache_data(ttl=600)
     def carregar_camada(caminho_gpkg):
         gdf = gpd.read_file(caminho_gpkg)
         if gdf.crs is None or gdf.crs.to_epsg() != 4326:
