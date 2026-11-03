@@ -23,25 +23,25 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit.components.v1 as components
 
+# Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
+def hex_to_rgba(hex_str, alpha=255):
+    hex_str = hex_str.lstrip("#")
+    return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
+
+# 1. Carregamento dos Dados
+@st.cache_data(ttl=600)
+def carregar_camada(caminho_gpkg):
+    gdf = gpd.read_file(caminho_gpkg)
+    # PyDeck e Leaflet exigem coordenadas geográficas WGS84 (EPSG:4326)
+    if gdf.crs is None or gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs(epsg=4326)
+    return gdf
+
 def render_observed_hours():
     st.set_page_config(layout="wide")
     st.title("NDS Speed Viewer")
     st.subheader("Interactive Hourly Speed Analysis")
-    
-    # Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
-    def hex_to_rgba(hex_str, alpha=255):
-        hex_str = hex_str.lstrip("#")
-        return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
-    
-    # 1. Carregamento dos Dados
-    @st.cache_data(ttl=600)
-    def carregar_camada(caminho_gpkg):
-        gdf = gpd.read_file(caminho_gpkg)
-        # PyDeck e Leaflet exigem coordenadas geográficas WGS84 (EPSG:4326)
-        if gdf.crs is None or gdf.crs.to_epsg() != 4326:
-            gdf = gdf.to_crs(epsg=4326)
-        return gdf
-    
+
     # Caminhos dos arquivos
     caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/grade_h9_nds_horarios.gpkg"
     caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
