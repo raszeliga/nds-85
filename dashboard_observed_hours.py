@@ -22,14 +22,29 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit.components.v1 as components
+import io
+import requests
 
+# Funções auxiliares e de cache no escopo global do módulo
 # Função auxiliar: converte '#RRGGBB' para [R, G, B, 255]
 def hex_to_rgba(hex_str, alpha=255):
     hex_str = hex_str.lstrip("#")
     return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [alpha]
 
-# 1. Carregamento dos Dados
-@st.cache_data(ttl=600)
+# Carregamento dos Dados
+@st.cache_data(ttl=300)
+def carregar_camada_remota(url: str) -> gpd.GeoDataFrame:
+    # Cabeçalho que instrui os proxies e a CDN a buscarem o arquivo original
+    headers = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    
+    # BytesIO evita que o GDAL precise interpretar a URL diretamente
+    gdf = gpd.read_file(io.BytesIO(response.content))
+    if gdf.crs is None or gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs(epsg=4326)
+    return gdf
+
 def carregar_camada(caminho_gpkg):
     gdf = gpd.read_file(caminho_gpkg)
     # PyDeck e Leaflet exigem coordenadas geográficas WGS84 (EPSG:4326)
