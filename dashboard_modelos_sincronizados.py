@@ -27,7 +27,7 @@ def render_modelos_sincronizados():
     st.subheader("See descriptive statistics below the maps")
 
     # 1. Carregamento dos Dados
-    @st.cache_data
+    @st.cache_data(ttl=600)
     def carregar_camada(caminho_gpkg):
         gdf = gpd.read_file(caminho_gpkg)
         # Leaflet exige coordenadas geográficas WGS84 (EPSG:4326)
