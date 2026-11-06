@@ -464,6 +464,7 @@ def render_observed_sincronizados():
     st.markdown("---")
     with st.expander("About the Database and Machine Learning Models applied"):
         st.markdown("""
+        - **V85:** represents the 85th percentile speed for each time period (only considered speeds that exceed 5 km/h).
         - **Spatial Resolution:** Hexagonal grid H3 Resolution 9 (the hexagons are approximately 200m on each side).
         - **Scope:** Municipality of Curitiba / Urban Limits.
         - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors.
