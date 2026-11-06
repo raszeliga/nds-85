@@ -24,7 +24,7 @@ import streamlit.components.v1 as components
 import json
 
 def render_observed_sincronizados():
-    st.subheader("NDS Speed Viewer - Comparison Mode")
+    st.subheader("NDS Speed Viewer - Comparison Mode. Descriptive statistics below the maps")
     
     # 1. Carregamento dos Dados
     @st.cache_data(ttl=600)
