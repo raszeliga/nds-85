@@ -22,8 +22,8 @@ import streamlit.components.v1 as components
 import json
 
 def render_modelos_sincronizados():
-    st.title("NDS Predictive Models Viewer - Comparison Mode")
-    st.subheader("See descriptive statistics below the maps")
+    st.subheader("NDS Predictive Models Comparison Mode - Descriptive statistics below the maps")
+	
 
     # 1. Carregamento dos Dados
     @st.cache_data(ttl=600)
