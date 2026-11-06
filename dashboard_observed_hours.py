@@ -465,7 +465,7 @@ def render_observed_hours():
                 st.metric(
                     label="Total Count",
                     value=f"{dados_coluna.notna().sum():,}",
-                    help="Total de hexágonos H3 válidos observados",
+                    help="Total de hexágonos observados",
                 )
     
     # Rodapé informativo
