@@ -459,7 +459,14 @@ def render_observed_hours():
         m4, m5, m6 = st.columns(3)
         m4.metric("Minimum", f"{serie_limpa.min():.2f}")
         m5.metric("Maximum", f"{serie_limpa.max():.2f}")
-        m6.metric("Count", f"{dados_coluna.notna().sum()}")
+        
+        with m6:
+            with st.container(border=True):
+                st.metric(
+                    label="Total Count",
+                    value=f"{dados_coluna.notna().sum():,}",
+                    help="Total de hexágonos H3 válidos observados",
+                )
     
     # Rodapé informativo
     st.markdown("---")
