@@ -55,6 +55,7 @@ def carregar_camada(caminho_gpkg):
 def render_observed_hours():
     st.title("NDS Speed Viewer")
     st.subheader("Interactive Hourly Speed Analysis")
+    st.caption("V85 represents the 85th percentile speed for each time period (only considered speeds that exceed 5 km/h).")
 
     # Caminhos dos arquivos
     caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/grade_h9_nds_horarios_v2.gpkg"
