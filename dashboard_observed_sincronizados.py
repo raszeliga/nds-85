@@ -25,6 +25,7 @@ import json
 
 def render_observed_sincronizados():
     st.subheader("NDS Speed Viewer Comparison Mode - Descriptive statistics below the maps")
+    st.caption("See descriptive statistics below the maps. V85 represents the 85th percentile speed for each time period (only considered speeds that exceed 5 km/h).")
     
     # 1. Carregamento dos Dados
     @st.cache_data(ttl=600)
