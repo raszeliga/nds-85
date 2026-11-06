@@ -25,8 +25,7 @@ import json
 
 def render_observed_sincronizados():
     st.title("NDS Speed Viewer - Comparison Mode")
-    st.subheader("See descriptive statistics below the maps")
-
+    
     # 1. Carregamento dos Dados
     @st.cache_data(ttl=600)
     def carregar_camada(caminho_gpkg):
