@@ -24,6 +24,12 @@ import streamlit.components.v1 as components
 import json
 
 def render_observed_sincronizados():
+    # -------------------------------------------------------------
+    # [AJUSTE] Controle de estado para scroll apenas na 1ª abertura
+    # -------------------------------------------------------------
+    if "has_scrolled_sync_view" not in st.session_state:
+        st.session_state.has_scrolled_sync_view = False
+        
     st.title("NDS Speed Viewer - Comparison Mode")
     st.subheader("See descriptive statistics below the maps")
 
@@ -107,7 +113,7 @@ def render_observed_sincronizados():
     json_comend = gdf_comend[['geometry']].to_json() if mostrar_comend else "null"
     json_bairros = gdf_bairros[['geometry']].to_json() if mostrar_bairros else "null"
 
-# --- 4. MAPAS SINCRONIZADOS VIA LEAFLET.SYNC COM GESTÃO DE TOOLTIPS ---
+    # --- 4. MAPAS SINCRONIZADOS VIA LEAFLET.SYNC COM GESTÃO DE TOOLTIPS ---
     map_sync_html = f"""
     <!DOCTYPE html>
     <html>
@@ -325,6 +331,11 @@ def render_observed_sincronizados():
     # Renderiza o container com os dois mapas sincronizados
     components.html(map_sync_html, height=530)
 
+    # -------------------------------------------------------------
+    # [AJUSTE 2] Marcador de âncora inserido exatamente entre os mapas e os gráficos
+    # -------------------------------------------------------------
+    st.markdown('<div id="stats-anchor"></div>', unsafe_allow_html=True)
+
     # --- 5. LEGENDAS, DISTRIBUIÇÕES E ESTATÍSTICAS ---
     def render_legenda(coluna_nome):
         faixas = ["≤ 20", "20 – 30", "30 – 40", "40 – 50", "> 50"]
@@ -402,6 +413,29 @@ def render_observed_sincronizados():
         - The construcution of this Dashboard is part of Authors (2027) - https://zenodo.org/records/21605239
         - Machine Learning Models applied as seen in Authors (2027) - https://zenodo.org/records/21605239
         """)
+
+    # -------------------------------------------------------------
+    # [AJUSTE 3] Injeção JS para rolagem centralizada
+    # -------------------------------------------------------------
+    if not st.session_state.has_scrolled_sync_view:
+        components.html(
+            """
+            <script>
+                setTimeout(function() {
+                    const target = window.parent.document.getElementById("stats-anchor");
+                    if (target) {
+                        // 'center' posiciona a linha divisória no meio da viewport:
+                        // a metade inferior dos mapas fica no topo da tela,
+                        // e os gráficos/legendas ocupam a metade de baixo.
+                        target.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }
+                }, 800);
+            </script>
+            """,
+            height=0,
+            width=0,
+        )
+        st.session_state.has_scrolled_sync_view = True
 
     if __name__ == "__main__":
         render_observed_sincronizados()
