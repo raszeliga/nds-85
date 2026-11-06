@@ -106,6 +106,10 @@ def render_observed_sincronizados():
     json_comend = gdf_comend[['geometry']].to_json() if mostrar_comend else "null"
     json_bairros = gdf_bairros[['geometry']].to_json() if mostrar_bairros else "null"
 
+    # Exporta geometry e NOME para bairros
+    cols_bairros = ['geometry', 'NOME'] if 'NOME' in gdf_bairros.columns else ['geometry']
+    json_bairros = gdf_bairros[cols_bairros].to_json() if mostrar_bairros else "null"
+
 # --- 4. MAPAS SINCRONIZADOS VIA LEAFLET.SYNC COM GESTÃO DE TOOLTIPS ---
     map_sync_html = f"""
     <!DOCTYPE html>
@@ -164,6 +168,28 @@ def render_observed_sincronizados():
                 padding: 4px 8px !important;
                 border-radius: 4px !important;
             }}
+            /* Rótulos dos bairros */
+            .bairro-label {{
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                text-align: center;
+                pointer-events: none !important;
+            }}            
+            .bairro-label span {{
+                font-size: 11px;
+                font-weight: 700;
+                color: #202020;
+                letter-spacing: 0.4px;
+                text-transform: uppercase;
+                text-shadow:
+                    -1px -1px 0 #ffffff,
+                     1px -1px 0 #ffffff,
+                    -1px  1px 0 #ffffff,
+                     1px  1px 0 #ffffff,
+                     0px  0px 4px #ffffff;
+                white-space: nowrap;
+            }}            
         </style>
     </head>
     <body>
@@ -315,7 +341,52 @@ def render_observed_sincronizados():
             addCorridor({json_cont}, '#696969', 2.0);
             addCorridor({json_277}, '#5E17EB', 2.0);
             addCorridor({json_comend}, '#1C1C1E', 2.0);
-            addCorridor({json_bairros}, 'rgba(90,90,90,0.7)', 1.0);
+            
+            // Camada de Bairros (Bordas e Rótulos Dinâmicos por Zoom)
+            const bairrosData = {json_bairros};
+            if (bairrosData) {{
+                // 1. Linhas delimitadoras
+                const styleBairros = {{ color: 'rgba(90,90,90,0.7)', weight: 1.0, fill: false }};
+                L.geoJSON(bairrosData, {{ style: styleBairros }}).addTo(mapL);
+                L.geoJSON(bairrosData, {{ style: styleBairros }}).addTo(mapR);
+
+                // 2. Grupos de rótulos de texto
+                const labelsL = L.layerGroup();
+                const labelsR = L.layerGroup();
+
+                L.geoJSON(bairrosData, {{
+                    onEachFeature: function(feat, layer) {{
+                        if (feat.properties && feat.properties.NOME && layer.getBounds && layer.getBounds().isValid()) {{
+                            const center = layer.getBounds().getCenter();
+                            const icon = L.divIcon({{
+                                className: 'bairro-label',
+                                html: `<span>${{feat.properties.NOME}}</span>`,
+                                iconSize: [120, 20],
+                                iconAnchor: [60, 10]
+                            }});
+                            L.marker(center, {{ icon: icon, interactive: false }}).addTo(labelsL);
+                            L.marker(center, {{ icon: icon, interactive: false }}).addTo(labelsR);
+                        }}
+                    }}
+                }});
+
+                // Limiar de zoom: o mapa inicia em 11; a partir de 12.5 os nomes tornam-se visíveis
+                const ZOOM_THRESHOLD = 12.5;
+
+                function updateBairrosLabels() {{
+                    if (mapL.getZoom() >= ZOOM_THRESHOLD) {{
+                        if (!mapL.hasLayer(labelsL)) mapL.addLayer(labelsL);
+                        if (!mapR.hasLayer(labelsR)) mapR.addLayer(labelsR);
+                    }} else {{
+                        if (mapL.hasLayer(labelsL)) mapL.removeLayer(labelsL);
+                        if (mapR.hasLayer(labelsR)) mapR.removeLayer(labelsR);
+                    }}
+                }}
+
+                mapL.on('zoomend', updateBairrosLabels);
+                mapR.on('zoomend', updateBairrosLabels);
+                updateBairrosLabels();
+            }}
         </script>
     </body>
     </html>
