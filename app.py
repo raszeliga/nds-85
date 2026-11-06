@@ -26,10 +26,10 @@ st.set_page_config(layout="wide", page_title="Urban Spatial Analysis")
 # Seletor no topo da sidebar
 menu_modulo = st.sidebar.selectbox(
     "Select the Analysis Module:",
-    ["Contributing Factors (Hexagons)",
-     # "Observed Speeds (Hexagons)",
+    [# "Observed Speeds (Hexagons)",
      "Observed Speeds Alt. (Hexagons)",
      "Observed Speeds - Hours (Hexagons)",
+     "Contributing Factors (Hexagons)",
      # "Predictive Models (Hexagons)",
      "Predictive Models Alt. (Hexagons)",
      "Predictive Model: Random Forest (Street)"],
