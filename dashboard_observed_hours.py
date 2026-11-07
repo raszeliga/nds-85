@@ -58,7 +58,7 @@ def render_observed_hours():
     st.caption("V85 represents the 85th percentile speed for each time period (only considered speeds that exceed 5 km/h).")
 
     # Caminhos dos arquivos
-    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/grade_h9_nds_horarios_v2.gpkg"
+    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/grade_h9_nds_horarios_v3.gpkg"
     caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
     
     # bairos de Curitiba
