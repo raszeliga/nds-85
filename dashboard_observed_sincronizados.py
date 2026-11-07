@@ -24,7 +24,7 @@ import streamlit.components.v1 as components
 import json
 
 def render_observed_sincronizados():
-    st.subheader("NDS Speed Viewer Comparison Mode")
+    st.subheader("NDS Speed Viewer Time of the Day Comparison Mode")
     st.caption("See descriptive statistics below the maps. V85 represents the 85th percentile speed for each time period (only considered speeds that exceed 5 km/h).")
     
     # 1. Carregamento dos Dados
