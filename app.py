@@ -13,10 +13,10 @@ Created on Wed Sep 30 16:11:38 2026
 # pip install pydeck
 
 from dashboard_fatores import render_fatores
-from dashboard_observed import render_observed
+# from dashboard_observed import render_observed
 from dashboard_observed_sincronizados import render_observed_sincronizados
 from dashboard_observed_hours import render_observed_hours
-from dashboard_modelos import render_modelos
+# from dashboard_modelos import render_modelos
 from dashboard_modelos_sincronizados import render_modelos_sincronizados
 from dashboard_ruas import render_ruas_rf
 import streamlit as st
