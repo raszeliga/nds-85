@@ -26,27 +26,22 @@ st.set_page_config(layout="wide", page_title="Urban Spatial Analysis")
 # Seletor no topo da sidebar
 menu_modulo = st.sidebar.selectbox(
     "Select the Analysis Module:",
-    [# "Observed Speeds (Hexagons)",
+    ["Observed Speeds - Hours (Hexagons)",
      "Observed Speeds Alt. (Hexagons)",
-     "Observed Speeds - Hours (Hexagons)",
      "Contributing Factors (Hexagons)",
-     # "Predictive Models (Hexagons)",
      "Predictive Models Alt. (Hexagons)",
-     "Predictive Model: Random Forest (Street)"],
+     "Predictive Model: Random Forest (Street)"
+     ],
 )
 
 st.sidebar.markdown("---")
 
 if menu_modulo == "Contributing Factors (Hexagons)":
   render_fatores()
-elif menu_modulo == "Observed Speeds (Hexagons)":
-  render_observed()
 elif menu_modulo == "Observed Speeds Alt. (Hexagons)":
   render_observed_sincronizados()
 elif menu_modulo == "Observed Speeds - Hours (Hexagons)":
   render_observed_hours()
-elif menu_modulo == "Predictive Models (Hexagons)":
-  render_modelos()
 elif menu_modulo == "Predictive Models Alt. (Hexagons)":
   render_modelos_sincronizados()
 elif menu_modulo == "Predictive Model: Random Forest (Street)":
