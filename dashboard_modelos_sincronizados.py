@@ -22,7 +22,8 @@ import streamlit.components.v1 as components
 import json
 
 def render_modelos_sincronizados():
-    st.subheader("NDS Predictive Models Comparison Mode - Descriptive statistics below the maps")
+    st.subheader("NDS Predictive Models Comparison Mode")
+    st.caption("See descriptive statistics below the maps. V85 represents the 85th percentile speed for each time period (only considered speeds that exceed 5 km/h).")
 	
 
     # 1. Carregamento dos Dados
