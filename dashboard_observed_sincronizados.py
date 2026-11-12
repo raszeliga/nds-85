@@ -10,6 +10,8 @@ Created on Tue Sep 22 10:35:53 2026
 #### para rodar no terminal:
 #### streamlit run dashboard_modelos.py
 
+# pip install pydeck
+
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -21,21 +23,19 @@ from plotly.subplots import make_subplots
 import streamlit.components.v1 as components
 import json
 
-def render_modelos_sincronizados():
-    st.subheader("NDS Predictive Models Comparison Mode - Descriptive statistics below the maps")
-	
-
+def render_observed_sincronizados():
+    st.subheader("NDS Speed Viewer Time of the Day Comparison Mode")
+    st.caption("See descriptive statistics below the maps. V85 represents the 85th percentile speed for each time period (only considered speeds that exceed 5 km/h).")
+        
     # 1. Carregamento dos Dados
     @st.cache_data(ttl=600)
     def carregar_camada(caminho_gpkg):
         gdf = gpd.read_file(caminho_gpkg)
-        # Leaflet exige coordenadas geográficas WGS84 (EPSG:4326)
         if gdf.crs is None or gdf.crs.to_epsg() != 4326:
             gdf = gdf.to_crs(epsg=4326)
         return gdf
 
-    # Caminhos dos arquivos
-    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dash_modelos.gpkg"
+    caminho_hex = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dash_observed.gpkg"
     caminho_limite = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/bairros_dissolvido.gpkg"
     caminho_bairros = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/divisa_bairros_2.gpkg"
     caminho_biarticulado = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/eixos_biarticulados_dissolv_v3a.gpkg"
@@ -43,7 +43,6 @@ def render_modelos_sincronizados():
     caminho_contorno = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/Contorno_dissolv.gpkg"
     caminho_br277 = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/BR-277.gpkg"
     caminho_comend = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/comend_franco.gpkg"
-    caminho_dissolv = "https://github.com/raszeliga/nds-85/raw/refs/heads/main/gdf_dissolv_inf.gpkg"
 
     try:
         gdf_hex = carregar_camada(caminho_hex)
@@ -54,13 +53,11 @@ def render_modelos_sincronizados():
         gdf_contorno = carregar_camada(caminho_contorno)
         gdf_277 = carregar_camada(caminho_br277)
         gdf_comend = carregar_camada(caminho_comend)
-        gdf_dissolv_inf = carregar_camada(caminho_dissolv)
-
     except Exception as e:
         st.error(f"Erro ao carregar os arquivos GPKG: {e}")
         st.stop()
 
-    # --- 2. SIDEBAR: SELETORES E CAMADAS ---
+    # 2. Sidebar
     colunas_numericas = list(gdf_hex.select_dtypes(include=[np.number]).columns)
     if not colunas_numericas:
         st.error("Nenhuma coluna numérica encontrada no arquivo GPKG")
@@ -72,18 +69,8 @@ def render_modelos_sincronizados():
     coluna_dir = st.sidebar.selectbox("Right Map Variable:", colunas_numericas, index=idx_padrao_dir)
 
     st.sidebar.markdown("---")
-    st.sidebar.header("Polygon for Inferred Data")
-    mostrar_inf = st.sidebar.checkbox("Inferred Data", value=False)
-
-    st.sidebar.markdown("---")
     st.sidebar.header("Layer Styling")
-    opacidade_pct = st.sidebar.slider(
-        "Hexagon Opacity (%)", 
-        min_value=0, 
-        max_value=100, 
-        value=65, 
-        step=5
-    )
+    opacidade_pct = st.sidebar.slider("Hexagon Opacity (%)", min_value=0, max_value=100, value=65, step=5)
 
     st.sidebar.markdown("---")
     st.sidebar.header("Transportation Corridors")
@@ -97,33 +84,29 @@ def render_modelos_sincronizados():
     st.sidebar.header("Administrative Divisions")
     mostrar_bairros = st.sidebar.checkbox("Neighborhoods Boundaries", value=False)
 
-    # --- 3. CONFIGURAÇÕES COMPARTILHADAS DE CORES E GEOMETRIAS ---
+    # 3. Preparação das cores e dados geográficos
     N_CLASSES = 5
     colormap = plt.colormaps["YlOrRd"]
     cores_rgba = [colormap((i + 0.5) / N_CLASSES) for i in range(N_CLASSES)]
     cores_hex = [mcolors.to_hex(cor) for cor in cores_rgba]
 
-    # Ajuste da Câmera (baseado na extensão do limite municipal)
     bounds = gdf_limite.total_bounds
-    centro_lat = float((bounds[1] + bounds[3]) / 2)
-    centro_lon = float((bounds[0] + bounds[2]) / 2)
+    centro_lat = (bounds[1] + bounds[3]) / 2
+    centro_lon = (bounds[0] + bounds[2]) / 2
 
-    # Filtrar geometrias necessárias
+    # Exportar apenas as geometrias e colunas necessárias para o GeoJSON (otimiza render)
     gdf_hex_export = gdf_hex[['geometry', coluna_esq, coluna_dir]].copy()
     geojson_hex = gdf_hex_export.to_json()
     geojson_limite = gdf_limite[['geometry']].to_json()
 
-    # Limites dos dados inferidos
-    json_inf = gdf_dissolv_inf[['geometry']].to_json() if mostrar_inf else "null"
-
-    # Redes lineares opcionais
+    # Camadas opcionais
     json_biart = gdf_biarticulado[['geometry']].to_json() if mostrar_biarticulado else "null"
     json_lv = gdf_linha_verde[['geometry']].to_json() if mostrar_linha_verde else "null"
     json_cont = gdf_contorno[['geometry']].to_json() if mostrar_contorno else "null"
     json_277 = gdf_277[['geometry']].to_json() if mostrar_277 else "null"
     json_comend = gdf_comend[['geometry']].to_json() if mostrar_comend else "null"
     json_bairros = gdf_bairros[['geometry']].to_json() if mostrar_bairros else "null"
-    
+
     # Exporta geometry e NOME para bairros
     cols_bairros = ['geometry', 'NOME'] if 'NOME' in gdf_bairros.columns else ['geometry']
     json_bairros = gdf_bairros[cols_bairros].to_json() if mostrar_bairros else "null"
@@ -178,7 +161,6 @@ def render_modelos_sincronizados():
                 font-size: 13px;
                 border: 1px solid #ccc;
                 box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-                pointer-events: none;
             }}
             /* Impede que o tooltip capture o mouse e cause acúmulo */
             .leaflet-tooltip {{
@@ -194,7 +176,7 @@ def render_modelos_sincronizados():
                 box-shadow: none !important;
                 text-align: center;
                 pointer-events: none !important;
-            }}
+            }}            
             .bairro-label span {{
                 font-size: 11px;
                 font-weight: 700;
@@ -208,7 +190,7 @@ def render_modelos_sincronizados():
                      1px  1px 0 #ffffff,
                      0px  0px 4px #ffffff;
                 white-space: nowrap;
-            }}
+            }}            
         </style>
     </head>
     <body>
@@ -237,15 +219,16 @@ def render_modelos_sincronizados():
             }}
 
             const tileUrl = 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{{z}}/{{y}}/{{x}}';
-            const tileAttribution = 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ';
+            const tileAttribution = 'Tiles &copy; Esri, DeLorme, NAVTEQ';
 
+            // 1. Inicializar os dois mapas
             const mapL = L.map('map-left', {{ zoomControl: true, zoomSnap: 0.25 }}).setView([{centro_lat}, {centro_lon}], 11);
             const mapR = L.map('map-right', {{ zoomControl: true, zoomSnap: 0.25 }}).setView([{centro_lat}, {centro_lon}], 11);
 
             L.tileLayer(tileUrl, {{ maxZoom: 16, attribution: tileAttribution }}).addTo(mapL);
             L.tileLayer(tileUrl, {{ maxZoom: 16, attribution: tileAttribution }}).addTo(mapR);
 
-	    // 2. Sincronização mútua com leaflet.sync
+            // 2. Sincronização mútua com leaflet.sync
             mapL.sync(mapR);
             mapR.sync(mapL);
 
@@ -341,12 +324,12 @@ def render_modelos_sincronizados():
                 }}
             }}).addTo(mapR);
 
-            // Limite do Município
+            // Limite Municipal
             const styleLimite = {{ color: '#1E1E1E', weight: 1.5, fill: false }};
             L.geoJSON(limiteData, {{ style: styleLimite }}).addTo(mapL);
             L.geoJSON(limiteData, {{ style: styleLimite }}).addTo(mapR);
 
-            // Camadas lineares
+            // Camadas lineares auxiliares
             function addCorridor(jsonData, color, weight) {{
                 if (!jsonData) return;
                 const style = {{ color: color, weight: weight, fill: false }};
@@ -359,6 +342,7 @@ def render_modelos_sincronizados():
             addCorridor({json_cont}, '#696969', 2.0);
             addCorridor({json_277}, '#5E17EB', 2.0);
             addCorridor({json_comend}, '#1C1C1E', 2.0);
+            
             // Camada de Bairros (Bordas e Rótulos Dinâmicos por Zoom)
             const bairrosData = {json_bairros};
             if (bairrosData) {{
@@ -404,246 +388,79 @@ def render_modelos_sincronizados():
                 mapR.on('zoomend', updateBairrosLabels);
                 updateBairrosLabels();
             }}
-            // Camada de Inferidos (Bordas, preenchimento sutil e rótulos sincronizados)
-            const infData = {json_inf};
-            if (infData) {{
-                const styleInf = {{
-                    color: 'rgba(0, 31, 63, 0.85)',
-                    weight: 3.0,
-                    fill: true,
-                    fillColor: '#404040',
-                    fillOpacity: 0.20,
-                    interactive: false
-                }};
-
-                const labelsL = L.layerGroup();
-                const labelsR = L.layerGroup();
-
-                // 1. Instancia no mapa esquerdo e já extrai os centroides para os dois grupos de rótulos
-                L.geoJSON(infData, {{
-                    style: styleInf,
-                    onEachFeature: function(feat, layer) {{
-                        if (feat.properties && feat.properties.NOME && layer.getBounds && layer.getBounds().isValid()) {{
-                            const center = layer.getBounds().getCenter();
-                            const icon = L.divIcon({{
-                                className: 'inf-label',
-                                html: `<span>${{feat.properties.NOME}}</span>`,
-                                iconSize: [120, 20],
-                                iconAnchor: [60, 10]
-                            }});
-
-                            L.marker(center, {{ icon: icon, interactive: false }}).addTo(labelsL);
-                            L.marker(center, {{ icon: icon, interactive: false }}).addTo(labelsR);
-                        }}
-                    }}
-                }}).addTo(mapL);
-
-                // 2. Instancia apenas a geometria para o mapa direito
-                L.geoJSON(infData, {{ style: styleInf }}).addTo(mapR);
-
-                // 3. Controle de zoom sincronizado nas duas janelas
-                const ZOOM_THRESHOLD = 12.5;
-                let labelsVisible = null;
-
-                function updateInfLabels(e) {{
-                    const currentZoom = e ? e.target.getZoom() : mapL.getZoom();
-                    const shouldShow = currentZoom >= ZOOM_THRESHOLD;
-
-                    // Evita executar duas vezes quando ambos os mapas disparam 'zoomend' em sincronia
-                    if (shouldShow === labelsVisible) return;
-                    labelsVisible = shouldShow;
-
-                    if (shouldShow) {{
-                        if (!mapL.hasLayer(labelsL)) mapL.addLayer(labelsL);
-                        if (!mapR.hasLayer(labelsR)) mapR.addLayer(labelsR);
-                    }} else {{
-                        if (mapL.hasLayer(labelsL)) mapL.removeLayer(labelsL);
-                        if (mapR.hasLayer(labelsR)) mapR.removeLayer(labelsR);
-                    }}
-                }}
-
-                mapL.on('zoomend', updateInfLabels);
-                mapR.on('zoomend', updateInfLabels);
-                updateInfLabels();
-            }}
         </script>
     </body>
     </html>
     """
 
-    # Renderiza o container com os dois mapas
+    # Renderiza o container com os dois mapas sincronizados
     components.html(map_sync_html, height=530)
 
     # --- 5. LEGENDAS, DISTRIBUIÇÕES E ESTATÍSTICAS ---
     def render_legenda(coluna_nome):
-        faixas_intervalos = ["≤ 20", "20 – 30", "30 – 40", "40 – 50", "> 50"]
-        cores_rgb_str = [f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})" for r, g, b, _ in cores_rgba]
-
-        itens_legenda = []
-        for cor, intervalo in zip(cores_rgb_str, faixas_intervalos):
-            item = f"""
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                <div style="
-                    width: 100%; 
-                    height: 18px; 
-                    background-color: {cor}; 
-                    border-radius: 4px; 
-                    border: 1px solid rgba(0, 0, 0, 0.45); 
-                    box-sizing: border-box;
-                "></div>
-                <span style="font-size: 11px; color: #222; font-family: sans-serif; white-space: nowrap;">
-                    {intervalo}
-                </span>
-            </div>
-            """
-            itens_legenda.append(item)
-
-        blocos_html = "".join(itens_legenda)
-
-        legenda_html = f"""
-        <div style="
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding: 10px 14px;
-            background: #fbfbfb;
-            border-radius: 8px;
-            border: 1px solid #d0d0d0;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            margin-bottom: 10px;
-        ">
+        faixas = ["≤ 20", "20 – 30", "30 – 40", "40 – 50", "> 50"]
+        cores_str = [f"rgb({int(r*255)}, {int(g*255)}, {int(b*255)})" for r, g, b, _ in cores_rgba]
+        blocos = "".join([
+            f"""<div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                <div style="width: 100%; height: 18px; background-color: {cor}; border-radius: 4px; border: 1px solid rgba(0, 0, 0, 0.45); box-sizing: border-box;"></div>
+                <span style="font-size: 11px; color: #222; font-family: sans-serif; white-space: nowrap;">{f}</span>
+            </div>""" for cor, f in zip(cores_str, faixas)
+        ])
+        return f"""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 10px 14px; background: #fbfbfb; border-radius: 8px; border: 1px solid #d0d0d0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 12px; font-weight: 700; color: #1c1c1e;">
-                    Scale (km/h): {coluna_nome}
-                </span>
-                <span style="font-size: 11px; color: #666;">
-                    Fixed (5 Classes)
-                </span>
+                <span style="font-size: 12px; font-weight: 700; color: #1c1c1e;">Scale (km/h): {coluna_nome}</span>
+                <span style="font-size: 11px; color: #666;">Fixed (5 Classes)</span>
             </div>
-            <div style="display: flex; gap: 8px; width: 100%;">
-                {blocos_html}
-            </div>
+            <div style="display: flex; gap: 8px; width: 100%;">{blocos}</div>
         </div>
         """
-        return legenda_html
 
     def gerar_grafico_distribuicao(serie_limpa, coluna_nome):
-        fig = make_subplots(
-            rows=2,
-            cols=1,
-            shared_xaxes=True,
-            row_heights=[0.25, 0.75],
-            vertical_spacing=0.03
-        )
+        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.25, 0.75], vertical_spacing=0.03)
+        fig.add_trace(go.Box(x=serie_limpa, name="", orientation="h", fillcolor="rgba(253, 174, 107, 0.65)", line=dict(color="#1a1a1a", width=1.0), boxpoints="outliers", jitter=0.15, marker=dict(color="#1a1a1a", size=3.5, opacity=0.75), showlegend=False), row=1, col=1)
+        fig.add_trace(go.Histogram(x=serie_limpa, name="Frequency", marker_color="#fdae6b", opacity=0.85, marker_line=dict(color="#333333", width=0.6), xbins=dict(start=np.floor(serie_limpa.min()), end=np.ceil(serie_limpa.max()), size=2.0), showlegend=False), row=2, col=1)
 
-        fig.add_trace(
-            go.Box(
-                x=serie_limpa,
-                name="",
-                orientation="h",
-                fillcolor="rgba(253, 174, 107, 0.65)",
-                line=dict(color="#1a1a1a", width=1.0),
-                boxpoints="outliers",
-                jitter=0.15,
-                marker=dict(color="#1a1a1a", size=3.5, opacity=0.75),
-                showlegend=False
-            ),
-            row=1, col=1
-        )
-
-        fig.add_trace(
-            go.Histogram(
-                x=serie_limpa,
-                name="Frequency",
-                marker_color="#fdae6b",
-                opacity=0.85,
-                marker_line=dict(color="#333333", width=0.6),
-                xbins=dict(
-                    start=np.floor(serie_limpa.min()),
-                    end=np.ceil(serie_limpa.max()),
-                    size=2.0
-                ),
-                showlegend=False
-            ),
-            row=2, col=1
-        )
-
-        media_val = serie_limpa.mean()
-        mediana_val = serie_limpa.median()
-
-        fig.add_vline(
-            x=media_val,
-            line_width=1.5,
-            line_dash="dash",
-            line_color="#2b83ba",
-            annotation_text=f"Mean: {media_val:.1f}",
-            annotation_position="top left",
-            row=2, col=1
-        )
-        fig.add_vline(
-            x=mediana_val,
-            line_width=1.5,
-            line_dash="dot",
-            line_color="#008837",
-            annotation_text=f"Median: {mediana_val:.1f}",
-            annotation_position="top right",
-            row=2, col=1
-        )
-
-        fig.update_layout(
-            height=380,
-            margin=dict(l=20, r=20, t=15, b=20),
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-            bargap=0.05
-        )
-
+        media_val, mediana_val = serie_limpa.mean(), serie_limpa.median()
+        fig.add_vline(x=media_val, line_width=1.5, line_dash="dash", line_color="#2b83ba", annotation_text=f"Mean: {media_val:.1f}", annotation_position="top left", row=2, col=1)
+        fig.add_vline(x=mediana_val, line_width=1.5, line_dash="dot", line_color="#008837", annotation_text=f"Median: {mediana_val:.1f}", annotation_position="top right", row=2, col=1)
+        fig.update_layout(height=360, margin=dict(l=20, r=20, t=15, b=20), plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", bargap=0.05)
         fig.update_yaxes(showticklabels=False, row=1, col=1)
         fig.update_yaxes(title_text="Frequency", gridcolor="rgba(200, 200, 200, 0.25)", row=2, col=1)
         fig.update_xaxes(title_text=coluna_nome, dtick=10, gridcolor="rgba(200, 200, 200, 0.25)", row=2, col=1)
-
         return fig
 
-    def renderizar_painel_inferior(coluna_nome):
+    def renderizar_estatisticas(coluna_nome):
         components.html(render_legenda(coluna_nome), height=90)
-        st.markdown("---")
-
         st.markdown(f"#### Distribution: {coluna_nome}")
-        dados_coluna = gdf_hex[coluna_nome]
-        serie_limpa = dados_coluna.dropna()
+        dados = gdf_hex[coluna_nome]
+        limpos = dados.dropna()
 
-        fig = gerar_grafico_distribuicao(serie_limpa, coluna_nome)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(gerar_grafico_distribuicao(limpos, coluna_nome), use_container_width=True)
 
         m1, m2, m3 = st.columns(3)
-        m1.metric("Mean", f"{serie_limpa.mean():.2f}")
-        m2.metric("Median", f"{serie_limpa.median():.2f}")
-        m3.metric("St Dv", f"{serie_limpa.std():.2f}")
+        m1.metric("Mean", f"{limpos.mean():.2f}")
+        m2.metric("Median", f"{limpos.median():.2f}")
+        m3.metric("St Dv", f"{limpos.std():.2f}")
 
         m4, m5, m6 = st.columns(3)
-        m4.metric("Minimum", f"{serie_limpa.min():.2f}")
-        m5.metric("Maximum", f"{serie_limpa.max():.2f}")
-        m6.metric("Null", f"{dados_coluna.isna().sum()}")
+        m4.metric("Minimum", f"{limpos.min():.2f}")
+        m5.metric("Maximum", f"{limpos.max():.2f}")
+        m6.metric("Count", f"{dados.notna().sum()}")
+        
+    col_esq, col_dir = st.columns(2, gap="large")
+    with col_esq:
+        renderizar_estatisticas(coluna_esq)
+    with col_dir:
+        renderizar_estatisticas(coluna_dir)
 
     st.markdown("""
         <style>
-        [data-testid="stMetricValue"] {
-            font-size: 1.25rem !important;
-            line-height: 1.2 !important;
-        }
-        [data-testid="stMetricLabel"] {
-            font-size: 0.8rem !important;
-        }
+        [data-testid="stMetricValue"] { font-size: 1.25rem !important; line-height: 1.2 !important; }
+        [data-testid="stMetricLabel"] { font-size: 0.8rem !important; }
         </style>
     """, unsafe_allow_html=True)
-
-    # Renderização Lado a Lado dos painéis analíticos
-    col_esq, col_dir = st.columns(2, gap="large")
-
-    with col_esq:
-        renderizar_painel_inferior(coluna_esq)
-
-    with col_dir:
-        renderizar_painel_inferior(coluna_dir)
-
+    
     # Rodapé informativo
     st.markdown("---")
     with st.expander("About the Database and Machine Learning Models applied"):
@@ -654,9 +471,9 @@ def render_modelos_sincronizados():
         - **Linear Systems:** Main roads and public transport layers can be activated via the side menu to provide context for urban corridors.
         - **Data:** IPPUC / Municipal open data (2023–2026) and OpenStreetMap Data.
         - Speeds for the morning, afternoon, evening, and early morning periods refer to field collected data.
-        - The construction of this Dashboard is part of Authors (2026)
+        - The construcution of this Dashboard is part of Authors (2026)
         - Machine Learning Models applied as seen in Authors (2026)
         """)
 
-if __name__ == "__main__":
-    render_modelos_sincronizados()
+    if __name__ == "__main__":
+        render_observed_sincronizados()
