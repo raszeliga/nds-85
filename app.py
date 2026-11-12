@@ -27,9 +27,9 @@ st.set_page_config(layout="wide", page_title="Urban Spatial Analysis")
 menu_modulo = st.sidebar.selectbox(
     "Select the Analysis Module:",
     ["Observed Speeds - Hours (Hexagons)",
-     "Observed Speeds Alt. (Hexagons)",
+     "Observed Speeds Comparison (Hexagons)",
      "Contributing Factors (Hexagons)",
-     "Predictive Models Alt. (Hexagons)",
+     "Predictive Models Comparison (Hexagons)",
      "Predictive Model: Random Forest (Street)"
      ],
 )
