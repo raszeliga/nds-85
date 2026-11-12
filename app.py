@@ -38,11 +38,11 @@ st.sidebar.markdown("---")
 
 if menu_modulo == "Contributing Factors (Hexagons)":
   render_fatores()
-elif menu_modulo == "Observed Speeds Alt. (Hexagons)":
+elif menu_modulo == "Observed Speeds Comparison (Hexagons)":
   render_observed_sincronizados()
 elif menu_modulo == "Observed Speeds - Hours (Hexagons)":
   render_observed_hours()
-elif menu_modulo == "Predictive Models Alt. (Hexagons)":
+elif menu_modulo == "Predictive Models Comparison (Hexagons)":
   render_modelos_sincronizados()
 elif menu_modulo == "Predictive Model: Random Forest (Street)":
   render_ruas_rf()
