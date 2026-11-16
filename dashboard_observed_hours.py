@@ -111,10 +111,10 @@ def render_observed_hours():
     st.sidebar.markdown("---")
     st.sidebar.header("Transportation Corridors")
     mostrar_biarticulado = st.sidebar.checkbox(r"$\textcolor{#D00000}{\text{━━━}}$ Structuring Axes", value=False)
-    mostrar_linha_verde = st.sidebar.checkbox(r"$\textcolor{#009E60}{\text{━━━}}$ Linha Verde", value=False)
-    mostrar_contorno = st.sidebar.checkbox(r"$\textcolor{#696969}{\text{━━━}}$ Ringroad", value=False)
-    mostrar_277 = st.sidebar.checkbox(r"$\textcolor{#5E17EB}{\text{━━━}}$ Roadway BR-277", value=False)
-    mostrar_comend = st.sidebar.checkbox(r"$\textcolor{#1C1C1E}{\text{━━━}}$ Av das Torres", value=False)
+    mostrar_linha_verde = st.sidebar.checkbox(r"$\textcolor{#009E60}{\text{━━━}}$ Linha Verde Road", value=False)
+    mostrar_contorno = st.sidebar.checkbox(r"$\textcolor{#e9ed13}{\text{━━━}}$ Ringroad", value=False)
+    mostrar_277 = st.sidebar.checkbox(r"$\textcolor{#5E17EB}{\text{━━━}}$ BR-277 Roadway", value=False)
+    mostrar_comend = st.sidebar.checkbox(r"$\textcolor{#1C1C1E}{\text{━━━}}$ Comendador Franco Avenue", value=False)
 
     st.sidebar.markdown("---")
     st.sidebar.header("Administrative Divisions")
@@ -206,7 +206,7 @@ def render_observed_hours():
         if mostrar_linha_verde:
             camadas.append(pdk.Layer("GeoJsonLayer", gdf_linha_verde.__geo_interface__, id=f"lv-{sufixo_id}", stroked=True, filled=False, get_line_color=hex_to_rgba("#009E60"), line_width_min_pixels=2.5))
         if mostrar_contorno:
-            camadas.append(pdk.Layer("GeoJsonLayer", gdf_contorno.__geo_interface__, id=f"cont-{sufixo_id}", stroked=True, filled=False, get_line_color=hex_to_rgba("#696969"), line_width_min_pixels=2.0))
+            camadas.append(pdk.Layer("GeoJsonLayer", gdf_contorno.__geo_interface__, id=f"cont-{sufixo_id}", stroked=True, filled=False, get_line_color=hex_to_rgba("#e9ed13"), line_width_min_pixels=3.5))
         if mostrar_277:
             camadas.append(pdk.Layer("GeoJsonLayer", gdf_277.__geo_interface__, id=f"br277-{sufixo_id}", stroked=True, filled=False, get_line_color=hex_to_rgba("#5E17EB"), line_width_min_pixels=2.0))
         if mostrar_comend:
@@ -460,7 +460,6 @@ def render_observed_hours():
         m4, m5, m6 = st.columns(3)
         m4.metric("Minimum", f"{serie_limpa.min():.2f}")
         m5.metric("Maximum", f"{serie_limpa.max():.2f}")
-        
         with m6:
             with st.container(border=True):
                 st.metric(
